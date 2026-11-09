@@ -1,0 +1,17 @@
+{
+  "loteria": "megasena",
+  "nome": "Mega-Sena",
+  "atualizado_em": "2026-11-09T16:33:46-03:00",
+  "data_corrente": "2026-11-09",
+  "concursos": 3083,
+  "ultimo_concurso": 3083,
+  "data_ultimo_concurso": "2026-11-08",
+  "selic_ate": "2026-11-06",
+  "regras_ir_conferidas": false,
+  "totais": {
+    "bruto_nominal": 46004261663.23,
+    "bruto_corrigido": 172969346444.37,
+    "ir_nominal": 10499553183.86,
+    "ir_corrigido": 39356903738.65
+  }
+}
