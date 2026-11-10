@@ -58,7 +58,10 @@ def _get_json(url, tentativas=5):
 
 
 def fetch_ultimo(slug):
-    return int(_get_json(f"{CAIXA}/{slug}")["numero"])
+    res = _get_json(f"{CAIXA}/{slug}")
+    if not res or "numero" not in res:
+        raise RuntimeError(f"Nao foi possivel obter o ultimo concurso de {slug}")
+    return int(res["numero"])
 
 
 def fetch_concurso(slug, n):
@@ -71,9 +74,12 @@ def fetch_selic(ini, fim):
     while ini <= fim:
         fim_janela = min(date(ini.year + 9, 12, 31), fim)
         url = f"{SGS}?formato=json&dataInicial={ini:%d/%m/%Y}&dataFinal={fim_janela:%d/%m/%Y}"
-        j = _get_json(url)
-        if j:
-            partes.append(pd.DataFrame(j))
+        try:
+            j = _get_json(url)
+            if j:
+                partes.append(pd.DataFrame(j))
+        except Exception as e:
+            print(f"Aviso Selic ({ini} a {fim_janela}): {e}", file=sys.stderr)
         ini = date(fim_janela.year + 1, 1, 1)
     if not partes:
         return pd.DataFrame(columns=["data", "valor"])
@@ -107,7 +113,13 @@ def enxugar(c):
 
 def atualizar_raw(slug, raw_dir):
     arq = raw_dir / f"{slug}.json"
-    raw = {int(k): v for k, v in json.loads(arq.read_text("utf-8")).items()} if arq.exists() else {}
+    raw = {}
+    if arq.exists():
+        try:
+            raw = {int(k): v for k, v in json.loads(arq.read_text("utf-8")).items()}
+        except Exception:
+            raw = {}
+
     ultimo = fetch_ultimo(slug)
     faltam = set(range(1, ultimo + 1)) - set(raw)
     faltam |= set(range(max(1, ultimo - REBAIXAR_ULTIMOS + 1), ultimo + 1))
@@ -120,12 +132,13 @@ def atualizar_raw(slug, raw_dir):
             raise RuntimeError(f"Concurso {n} de {slug} nao encontrado")
         return enxugar(c)
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for c in ex.map(baixa, faltam):
-            raw[c["numero"]] = c
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    arq.write_text(json.dumps({str(k): raw[k] for k in sorted(raw)}, ensure_ascii=False,
-                              separators=(",", ":")), encoding="utf-8")
+    if faltam:
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            for c in ex.map(baixa, faltam):
+                raw[c["numero"]] = c
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        arq.write_text(json.dumps({str(k): raw[k] for k in sorted(raw)}, ensure_ascii=False,
+                                  separators=(",", ":")), encoding="utf-8")
     return raw
 
 
@@ -134,7 +147,8 @@ def atualizar_selic(csv, primeiro, hoje):
     ini = (atual["data"].max().date() + timedelta(days=1)) if atual is not None else primeiro
     if ini <= hoje:
         novo = fetch_selic(ini, hoje)
-        atual = pd.concat([atual, novo], ignore_index=True) if atual is not None else novo
+        if not novo.empty:
+            atual = pd.concat([atual, novo], ignore_index=True) if atual is not None else novo
     if atual is None or atual.empty:
         raise RuntimeError("Serie da Selic vazia")
     atual = atual.drop_duplicates("data").sort_values("data").reset_index(drop=True)
@@ -154,6 +168,8 @@ def tabela_faixas(raw, hoje):
                            "faixa": f["faixa"], "descricao": f["descricao"],
                            "ganhadores": f["ganhadores"], "premio_por_ganhador": f["premio"]})
     df = pd.DataFrame(linhas)
+    if df.empty:
+        return df
     df["data"] = df["data"].astype("datetime64[ns]")
     df["bruto_nominal"] = df["ganhadores"] * df["premio_por_ganhador"]
     return df
@@ -188,6 +204,9 @@ VALORES = ["bruto_nominal", "bruto_corrigido", "ir_nominal", "ir_corrigido"]
 
 def calcular(raw, selic, regras, hoje):
     f = tabela_faixas(raw, hoje)
+    if f.empty:
+        return f, pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        
     f["fator_selic"] = fator_selic(f["data"], selic, hoje)
     f = aplicar_ir(f, regras)
     f["bruto_corrigido"] = f["bruto_nominal"] * f["fator_selic"]
@@ -249,30 +268,43 @@ def main(argv=None, root=ROOT, hoje=None):
 
     saida = root / "docs" / "data"
     indice = []
+    
+    # Execução resiliente por modalidade
     for slug, cfg in LOTERIAS.items():
-        if a.so_calcular:
-            raw = {int(k): v for k, v in json.loads(
-                (root / "data" / "raw" / f"{slug}.json").read_text("utf-8")).items()}
-            selic = pd.read_csv(root / "data" / "selic.csv", parse_dates=["data"])
-        else:
-            raw = atualizar_raw(slug, root / "data" / "raw")
-            selic = atualizar_selic(root / "data" / "selic.csv", cfg["primeiro_concurso"], hoje)
-        f, pc, por_ano, por_mes, por_ano_faixa = calcular(raw, selic, regras, hoje)
-        meta = {
-            "loteria": slug, "nome": cfg["nome"],
-            "atualizado_em": datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat(timespec="seconds"),
-            "data_corrente": hoje.isoformat(),
-            "concursos": int(pc["concurso"].nunique()),
-            "ultimo_concurso": int(pc["concurso"].max()),
-            "data_ultimo_concurso": pc["data"].max().strftime("%Y-%m-%d"),
-            "selic_ate": selic["data"].max().strftime("%Y-%m-%d"),
-            "regras_ir_conferidas": regras_ok,
-            "totais": {c: round(float(pc[c].sum()), 2) for c in VALORES},
-        }
-        gravar(slug, cfg["nome"], saida, f, pc, por_ano, por_mes, por_ano_faixa, meta)
-        indice.append({"slug": slug, "nome": cfg["nome"]})
-        print(f"[{slug}] {meta['concursos']} concursos; selic ate {meta['selic_ate']}", file=sys.stderr)
-    (saida / "loterias.json").write_text(json.dumps(indice, ensure_ascii=False), encoding="utf-8")
+        try:
+            if a.so_calcular:
+                raw = {int(k): v for k, v in json.loads(
+                    (root / "data" / "raw" / f"{slug}.json").read_text("utf-8")).items()}
+                selic = pd.read_csv(root / "data" / "selic.csv", parse_dates=["data"])
+            else:
+                raw = atualizar_raw(slug, root / "data" / "raw")
+                selic = atualizar_selic(root / "data" / "selic.csv", cfg["primeiro_concurso"], hoje)
+            
+            f, pc, por_ano, por_mes, por_ano_faixa = calcular(raw, selic, regras, hoje)
+            
+            if pc.empty:
+                continue
+
+            meta = {
+                "loteria": slug, "nome": cfg["nome"],
+                "atualizado_em": datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat(timespec="seconds"),
+                "data_corrente": hoje.isoformat(),
+                "concursos": int(pc["concurso"].nunique()),
+                "ultimo_concurso": int(pc["concurso"].max()),
+                "data_ultimo_concurso": pc["data"].max().strftime("%Y-%m-%d"),
+                "selic_ate": selic["data"].max().strftime("%Y-%m-%d"),
+                "regras_ir_conferidas": regras_ok,
+                "totais": {c: round(float(pc[c].sum()), 2) for c in VALORES},
+            }
+            gravar(slug, cfg["nome"], saida, f, pc, por_ano, por_mes, por_ano_faixa, meta)
+            indice.append({"slug": slug, "nome": cfg["nome"]})
+            print(f"[{slug}] Sucesso: {meta['concursos']} concursos processados.", file=sys.stderr)
+        except Exception as err:
+            print(f"ERRO ao processar [{slug}]: {err}", file=sys.stderr)
+
+    # Grava o indice de loterias disponiveis
+    if indice:
+        (saida / "loterias.json").write_text(json.dumps(indice, ensure_ascii=False), encoding="utf-8")
 
 
 if __name__ == "__main__":
