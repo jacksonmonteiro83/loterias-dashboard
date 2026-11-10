@@ -2,7 +2,7 @@ name: Atualizar loterias
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # 03:00 UTC = 00:00 em Brasília
+    - cron: "0 3 * * *"   # 03:00 UTC = 00:00 em Brasília (o GitHub pode atrasar alguns minutos)
   workflow_dispatch:       # botão "Run workflow" para rodar na hora
 
 permissions:
@@ -13,22 +13,70 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  atualizar:
+  listar:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    outputs:
+      slugs: ${{ steps.l.outputs.slugs }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-
       - run: pip install -r requirements.txt
+      - id: l
+        run: echo "slugs=$(python scripts/update.py listar)" >> "$GITHUB_OUTPUT"
 
-      - name: Baixar dados novos e recalcular
-        run: python scripts/update.py
+  # Uma tarefa por loteria, em paralelo. A primeira rodada baixa o histórico inteiro;
+  # depois só os concursos novos. Se uma loteria falhar, as outras seguem.
+  coletar:
+    needs: listar
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        slug: ${{ fromJSON(needs.listar.outputs.slugs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Baixar concursos novos de ${{ matrix.slug }}
+        run: python scripts/update.py coletar ${{ matrix.slug }}
+      - uses: actions/upload-artifact@v4
+        if: always()   # guarda o progresso mesmo se a coleta falhar no meio
+        with:
+          name: raw-${{ matrix.slug }}
+          path: data/raw/${{ matrix.slug }}.json
+          if-no-files-found: ignore
+          retention-days: 3
 
+  publicar:
+    needs: coletar
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: data/raw
+          pattern: raw-*
+          merge-multiple: true
+      - name: Atualizar Selic e recalcular
+        id: calc
+        continue-on-error: true
+        run: python scripts/update.py calcular
       - name: Publicar alterações
         run: |
           git config user.name "github-actions[bot]"
@@ -38,5 +86,11 @@ jobs:
             echo "Sem alterações."
           else
             git commit -m "Atualiza dados ($(date -u +%F))"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
+      - name: Falhar se o cálculo teve erro
+        if: steps.calc.outcome == 'failure'
+        run: |
+          echo "O cálculo falhou para alguma loteria; veja os logs do passo anterior."
+          exit 1

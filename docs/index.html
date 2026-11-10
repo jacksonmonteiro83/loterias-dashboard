@@ -90,8 +90,8 @@ a{color:var(--accent)}
     
     <div class="year-filter">
       <span style="font-weight:600;font-size:13px;">Filtrar Período (Ano):</span>
-      <label class="sub">De: <input type="number" id="anoDe" placeholder="Ex: 1996" min="1996" max="2026"></label>
-      <label class="sub">Até: <input type="number" id="anoAte" placeholder="Ex: 2026" min="1996" max="2026"></label>
+      <label class="sub">De: <input type="number" id="anoDe" placeholder="Ex: 1994" min="1994" max="2100"></label>
+      <label class="sub">Até: <input type="number" id="anoAte" placeholder="Ex: 2026" min="1994" max="2100"></label>
       <span class="sub">(Deixe em branco para todo o histórico)</span>
     </div>
   </div>
@@ -195,7 +195,8 @@ function sufixo(){ return state.base==="corrigido" ? "_corrigido" : "_nominal"; 
 function filtrarPorAnoEERA(lista){
   if(!Array.isArray(lista)) return [];
   return lista.filter(r => {
-    const ano = r.ano || parseInt(r.mes);
+    const ano = parseInt(r.ano ?? r.mes ?? r.data);   // resumo por ano, por mês ou concurso (data)
+    if(isNaN(ano)) return true;
     if(state.anoDe && ano < state.anoDe) return false;
     if(state.anoAte && ano > state.anoAte) return false;
     if(state.era === "pre" && ano > 2014) return false;
@@ -216,7 +217,7 @@ function render(){
   const brutoNominal = resumo.reduce((a,b)=>a+(b["bruto_nominal"]||0),0);
   const irNominal = resumo.reduce((a,b)=>a+(b["ir_nominal"]||0),0);
 
-  const rotulo = state.base==="corrigido" ? "corrigido (Selic/IPCA)" : "nominal";
+  const rotulo = state.base==="corrigido" ? "corrigido pela Selic" : "nominal";
   
   $("#kpis").innerHTML = [
     ["Prêmios Brutos Pagos", compact(brutoSum), "Valor Nominal: " + compact(brutoNominal), "Total pago nas faixas"],
@@ -259,6 +260,14 @@ function render(){
     const b=r["bruto"+suf]||0, i=r["ir"+suf]||0;
     return `<tr><td>${r[chave]}</td><td>${r.concursos||0}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
     
+  $("#tl-b").innerHTML = (state.d.porLoteria || []).map(l => {
+    const rows = filtrarPorAnoEERA(l.ano);
+    const b = rows.reduce((a,r)=>a+(r["bruto"+suf]||0),0), i = rows.reduce((a,r)=>a+(r["ir"+suf]||0),0);
+    return {nome:l.nome, c:rows.reduce((a,r)=>a+(r.concursos||0),0), b, i};
+  }).filter(l => l.c > 0).sort((a,b)=>b.b-a.b).map(l =>
+    `<tr><td>${l.nome}</td><td>${l.c.toLocaleString("pt-BR")}</td><td>${brl(l.b)}</td><td>${brl(l.i)}</td><td>${l.b?(l.i/l.b*100).toFixed(1):"0.0"}%</td></tr>`).join("")
+    || `<tr><td colspan="5" class="empty">Sem dados no período</td></tr>`;
+
   renderConcursos();
   renderSimulador();
 }
@@ -268,8 +277,8 @@ function renderConcursos(){
   let rows = filtrarPorAnoEERA(state.d?.concursos || []);
   if(q) rows = rows.filter(r => String(r.concurso).includes(q) || fmtData(r.data).includes(q));
   rows = [...rows].reverse().slice(0,200);
-  $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
-    || `<tr><td colspan="4" class="empty">Nenhum concurso encontrado</td></tr>`;
+  $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.loteria||""}</td><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
+    || `<tr><td colspan="5" class="empty">Nenhum concurso encontrado</td></tr>`;
 }
 
 function renderSimulador(){
@@ -291,14 +300,14 @@ function calcSimulacao(){
   const fator = regAno.bruto_corrigido / regAno.bruto_nominal;
   const valCorrigido = valVal * fator;
   
-  $("#simRes").innerHTML = `O prêmio de <strong>${brl(valVal)}</strong> em ${anoVal} equivale a aproximadamente <br><span style="font-size:22px">${brl(valCorrigido)}</span> a valores presentes (Selic/IPCA).`;
+  $("#simRes").innerHTML = `O prêmio de <strong>${brl(valVal)}</strong> em ${anoVal} equivale a aproximadamente <br><span style="font-size:22px">${brl(valCorrigido)}</span> a valores presentes (corrigido pela Selic).`;
 }
 
 function esqueleto(){
   $("#app").innerHTML = `
     <div class="controls">
       <div class="seg" id="sBase">
-        <button data-v="corrigido" aria-pressed="true">Corrigido (Selic/IPCA)</button>
+        <button data-v="corrigido" aria-pressed="true">Corrigido (Selic)</button>
         <button data-v="nominal" aria-pressed="false">Nominal</button>
       </div>
       <div class="seg" id="sPer">
@@ -320,6 +329,7 @@ function esqueleto(){
           <h2>Distribuição Estimada da Arrecadação</h2>
           <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
           <div class="legend" id="l-donut"></div>
+          <p class="note">Estimativa com percentuais fixos sobre o prêmio bruto; não usa a arrecadação real de cada concurso e varia entre loterias.</p>
         </div>
         <div class="card">
           <h2>Simulador de Correção de Prêmios</h2>
@@ -340,10 +350,12 @@ function esqueleto(){
 
       <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
       <div class="card"><h2 id="t2"></h2><div id="c2"></div><div class="legend" id="l2"></div></div>
+      <div class="card"><h2>Totais por Loteria <span class="sub">(respeita o filtro de período)</span></h2>
+        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Bruto Pago</th><th>IR Arrecadado</th><th>Alíq. IR</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
       <div class="card"><h2>Resumo por Período</h2><div class="scroll"><table><thead id="tp-h"></thead><tbody id="tp-b"></tbody></table></div></div>
       <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº ou data)</span></h2>
         <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso ou data…"></p>
-        <div class="scroll"><table><thead><tr><th>Concurso</th><th>Data</th><th>Bruto Pago</th><th>IR Arrecadado</th></tr></thead><tbody id="tc-b"></tbody></table></div></div>
+        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concurso</th><th>Data</th><th>Bruto Pago</th><th>IR Arrecadado</th></tr></thead><tbody id="tc-b"></tbody></table></div></div>
     </div>`;
 
   for(const [id,key] of [["#sBase","base"],["#sPer","per"],["#sEra","era"]]){
@@ -397,17 +409,26 @@ async function carregarSelecionadas(){
       mesMap[r.mes].ir_corrigido += r.ir_corrigido || 0;
       mesMap[r.mes].ir_nominal += r.ir_nominal || 0;
     });
-    (d.concursos || []).forEach(c => concursosList.push(c));
+    (d.concursos || []).forEach(c => concursosList.push({...c, loteria: d.meta.nome}));
   });
 
   state.d = {
     meta: loteriasDados[0].meta,
     ano: Object.values(anoMap).sort((a,b)=>a.ano-b.ano),
     mes: Object.values(mesMap).sort((a,b)=>a.mes.localeCompare(b.mes)),
-    concursos: concursosList.sort((a,b)=>b.concurso-a.concurso)
+    concursos: concursosList.sort((a,b)=> (a.data < b.data ? -1 : a.data > b.data ? 1 : a.concurso - b.concurso)),
+    porLoteria: loteriasDados.map(d => ({nome: d.meta.nome, ano: d.ano || []}))
   };
 
-  $("#atualizado").textContent = `Atualizado em ${new Date(state.d.meta.atualizado_em).toLocaleString("pt-BR")}`;
+  const maisRecente = loteriasDados.map(d => d.meta.atualizado_em).sort().pop();
+  $("#atualizado").textContent = `Atualizado em ${new Date(maisRecente).toLocaleString("pt-BR")} · Selic até ${fmtData(loteriasDados[0].meta.selic_ate)}`;
+
+  // aviso: regras de IR ainda nao conferidas (por loteria e periodo)
+  const avisos = loteriasDados.flatMap(d => (d.meta.regras_ir_pendentes || []).map(p =>
+    `${d.meta.nome}: ${fmtData(p.de)}${p.ate ? " a " + fmtData(p.ate) : " em diante"}`));
+  $("#banner").innerHTML = avisos.length
+    ? `<div class="banner"><b>Atenção:</b> o limite de isenção do IR ainda não foi conferido com a legislação em: ${avisos.join("; ")}. O IR desses períodos é provisório.</div>`
+    : "";
   esqueleto(); 
   render();
 }

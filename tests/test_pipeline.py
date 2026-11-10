@@ -1,4 +1,4 @@
-"""Testa o pipeline inteiro sem rede, com concursos e Selic sinteticos.
+"""Testa o pipeline inteiro sem rede, com duas loterias e Selic sinteticas.
 
 Uso:  python tests/test_pipeline.py [pasta_de_saida]
 Sem argumento usa uma pasta temporaria. Com argumento, deixa os arquivos la
@@ -28,10 +28,32 @@ def concurso(n, dia, faixas):
 
 
 FAKE = {
-    1: concurso(1, "11/03/1996", [("6 acertos", 0, 0.0), ("5 acertos", 10, 800.0), ("4 acertos", 100, 50.0)]),
-    2: concurso(2, "15/05/2024", [("6 acertos", 1, 1000000.0), ("5 acertos", 50, 2000.0), ("4 acertos", 3000, 3000.0)]),
-    3: concurso(3, "29/10/2026", [("6 acertos", 2, 500000.0), ("5 acertos", 0, 0.0), ("4 acertos", 0, 0.0)]),
+    "megasena": {
+        1: concurso(1, "11/03/1996", [("6 acertos", 0, 0.0), ("5 acertos", 10, 800.0), ("4 acertos", 100, 50.0)]),
+        2: concurso(2, "15/05/2024", [("6 acertos", 1, 1000000.0), ("5 acertos", 50, 2000.0), ("4 acertos", 3000, 3000.0)]),
+        3: concurso(3, "29/10/2026", [("6 acertos", 2, 500000.0), ("5 acertos", 0, 0.0), ("4 acertos", 0, 0.0)]),
+    },
+    "quina": {
+        1: concurso(1, "13/03/1994", [("5 acertos", 1, 50000.0)]),
+        2: concurso(2, "01/03/2005", [("5 acertos", 2, 20.0)]),
+        3: concurso(3, "15/05/2024", [("5 acertos", 1, 100000.0)]),
+        4: concurso(4, "28/10/2026", [("5 acertos", 3, 1000.0)]),
+    },
 }
+
+
+def instala_fakes(chamadas):
+    update.LOTERIAS = {
+        "megasena": {"nome": "Mega-Sena", "primeiro_concurso": date(1996, 3, 11)},
+        "quina": {"nome": "Quina", "primeiro_concurso": date(1994, 3, 13)},
+    }
+    update.fetch_ultimo = lambda slug: max(FAKE[slug])
+    update.fetch_concurso = lambda slug, n: (chamadas["concursos"].append((slug, n)), FAKE[slug][n])[1]
+
+    def fake_selic(ini, fim):
+        chamadas["selic"].append((ini, fim))
+        return pd.DataFrame({"data": pd.bdate_range(ini, fim), "valor": 0.05})
+    update.fetch_selic = fake_selic
 
 
 def main(destino=None):
@@ -40,48 +62,70 @@ def main(destino=None):
     shutil.copy(AQUI / "regras_ir.csv", raiz / "regras_ir.csv")
     if destino:
         shutil.copytree(AQUI / "docs", raiz / "docs", dirs_exist_ok=True, ignore=shutil.ignore_patterns("data"))
-
     chamadas = {"concursos": [], "selic": []}
-    update.fetch_ultimo = lambda slug: max(FAKE)
-    update.fetch_concurso = lambda slug, n: (chamadas["concursos"].append(n), FAKE[n])[1]
+    instala_fakes(chamadas)
 
-    def fake_selic(ini, fim):
-        chamadas["selic"].append((ini, fim))
-        d = pd.bdate_range(ini, fim)
-        return pd.DataFrame({"data": d, "valor": 0.05})
-    update.fetch_selic = fake_selic
+    assert update.main(["listar"], root=raiz) == 0
+    assert update.main(["tudo"], root=raiz, hoje=HOJE) == 0
 
-    update.LOTERIAS = {"megasena": {"nome": "Mega-Sena", "primeiro_concurso": date(1996, 3, 11)}}
-    update.main([], root=raiz, hoje=HOJE)
+    d = raiz / "docs" / "data"
+    mega = pd.read_csv(d / "megasena" / "faixas.csv")
+    quina = pd.read_csv(d / "quina" / "faixas.csv")
+    meta_m = json.loads((d / "megasena" / "meta.json").read_text())
+    meta_q = json.loads((d / "quina" / "meta.json").read_text())
 
-    d = raiz / "docs" / "data" / "megasena"
-    faixas = pd.read_csv(d / "faixas.csv")
-    meta = json.loads((d / "meta.json").read_text())
-
-    # fator Selic do concurso 1 = 1,0005 ^ (dias uteis apos 11/03/1996 ate hoje)
+    # Selic: fator do concurso 1 da Mega = 1,0005 ^ (dias uteis apos 11/03/1996 ate hoje)
     n = len(pd.bdate_range("1996-03-12", "2026-10-29"))
-    f1 = faixas[faixas.concurso == 1].fator_selic.iloc[0]
-    assert abs(f1 / 1.0005 ** n - 1) < 1e-7, (f1, 1.0005 ** n)  # CSV guarda 6 casas
-    assert abs(faixas[faixas.concurso == 3].fator_selic.iloc[0] - 1) < 1e-12
-    # IR: 1996 isento (800 e 50 < 900); 2024: limite 2259,20 -> sena e quadra tributam, quina nao
-    ir = faixas.groupby("concurso").ir_nominal.sum()
-    assert ir[1] == 0
-    assert ir[2] == 300000.0 + 3000 * 3000 * 0.30
-    assert ir[3] == 300000.0
-    assert faixas[(faixas.concurso == 2) & (faixas.faixa == 2)].ir_nominal.iloc[0] == 0
-    assert meta["concursos"] == 3 and meta["ultimo_concurso"] == 3
-    assert meta["regras_ir_conferidas"] is False
-    ano = json.loads((d / "resumo_ano.json").read_text())
-    assert abs(sum(r["ir_nominal"] for r in ano) - meta["totais"]["ir_nominal"]) < 0.01
-    assert [r["ano"] for r in ano] == [1996, 2024, 2026]
+    f1 = mega[mega.concurso == 1].fator_selic.iloc[0]
+    assert abs(f1 / 1.0005 ** n - 1) < 1e-7, (f1, 1.0005 ** n)
+    # serie Selic cobre desde a Quina (1994)
+    selic = pd.read_csv(raiz / "data" / "selic.csv", parse_dates=["data"])
+    assert selic["data"].min() <= pd.Timestamp("1994-03-14")
 
-    # 2a rodada (incremental): so os 3 ultimos concursos sao rebaixados; Selic so o dia novo
+    # IR Mega 1996 (R$ 11,10, base total): quina 10 x 800 x 30% + quadra 100 x 50 x 30%
+    ir = mega.groupby("concurso").ir_nominal.sum()
+    assert abs(ir[1] - (10 * 800 * 0.30 + 100 * 50 * 0.30)) < 1e-6
+    # IR 2024 (limite 2259,20, base excedente)
+    c2 = mega[mega.concurso == 2].set_index("faixa").ir_nominal
+    assert abs(c2[1] - 0.30 * (1000000 - 2259.20)) < 1e-4
+    assert c2[2] == 0
+    assert abs(c2[3] - 3000 * 0.30 * (3000 - 2259.20)) < 1e-4
+    assert abs(ir[3] - 2 * 0.30 * (500000 - 2428.80)) < 1e-4   # 2026, limite provisorio
+    # Quina: 2005 e anterior a 2008 (R$ 11,10, base total): 2 x 20 x 30% = 12; 2026: 1000 < limite -> isento
+    qir = quina.groupby("concurso").ir_nominal.sum()
+    assert abs(qir[2] - 12.0) < 1e-9 and qir[4] == 0
+    assert abs(qir[3] - 0.30 * (100000 - 2259.20)) < 1e-4
+
+    # pendencias de regra de IR por loteria
+    assert meta_m["regras_ir_pendentes"] == [{"de": "2025-05-01", "ate": None}]
+    assert meta_q["regras_ir_pendentes"] == [{"de": "1994-03-13", "ate": "1996-03-10"},
+                                             {"de": "2025-05-01", "ate": None}]
+    assert meta_m["regras_ir_conferidas"] is False
+    assert meta_m["concursos"] == 3 and meta_q["concursos"] == 4
+    indice = json.loads((d / "loterias.json").read_text())
+    assert [x["slug"] for x in indice] == ["megasena", "quina"]
+
+    # coleta incremental: so os 3 ultimos de cada uma e so o dia novo da Selic
     chamadas["concursos"].clear(); chamadas["selic"].clear()
-    update.main([], root=raiz, hoje=date(2026, 10, 30))
-    assert sorted(chamadas["concursos"]) == [1, 2, 3]  # so ha 3 concursos, todos sao "ultimos"
+    assert update.main(["tudo"], root=raiz, hoje=date(2026, 10, 30)) == 0
+    assert sorted(chamadas["concursos"]) == [("megasena", 1), ("megasena", 2), ("megasena", 3),
+                                             ("quina", 2), ("quina", 3), ("quina", 4)]
     assert chamadas["selic"] == [(date(2026, 10, 30), date(2026, 10, 30))], chamadas["selic"]
-    meta2 = json.loads((d / "meta.json").read_text())
-    assert meta2["selic_ate"] == "2026-10-30"
+
+    # isolamento: raw da Quina com buraco -> Quina falha (codigo 1), Mega continua publicada
+    arq = raiz / "data" / "raw" / "quina.json"
+    raw = json.loads(arq.read_text()); del raw["2"]; arq.write_text(json.dumps(raw))
+    antes = (d / "quina" / "meta.json").read_text()
+    assert update.main(["calcular"], root=raiz, hoje=date(2026, 10, 30)) == 1
+    assert (d / "quina" / "meta.json").read_text() == antes          # nao sobrescreveu
+    assert json.loads((d / "megasena" / "meta.json").read_text())["data_corrente"] == "2026-10-30"
+
+    # coleta isolada: uma loteria que falha na rede nao impede as demais
+    original = update.fetch_ultimo
+    update.fetch_ultimo = lambda slug: (_ for _ in ()).throw(RuntimeError("rede")) if slug == "quina" else original(slug)
+    assert update.main(["coletar"], root=raiz, hoje=HOJE) == 1
+    update.fetch_ultimo = original
+    assert update.main(["coletar", "xyz"], root=raiz) == 2
     print("OK: pipeline validado. Saida em", raiz)
 
 
