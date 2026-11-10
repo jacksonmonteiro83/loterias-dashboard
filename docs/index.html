@@ -87,7 +87,7 @@ const compact = n => {
   return "R$ " + Math.round(n);
 };
 const fmtData = iso => iso ? iso.split("-").reverse().join("/") : "";
-const state = { slug:null, base:"corrigido", per:"ano", era:"todas", d:null };
+const state = { slug:null, base:"corrigido", per:"ano", era:"todas", d:null, basePath:"" };
 
 async function getJSON(p){ const r = await fetch(p); if(!r.ok) throw new Error(p); return r.json(); }
 
@@ -101,14 +101,13 @@ function bindTip(el, text){
 function niceMax(v){ const p = Math.pow(10, Math.floor(Math.log10(v||1))); const m = v/p;
   return (m<=1?1:m<=2?2:m<=5?5:10)*p; }
 
-/* Gráfico de Barras Empilhadas */
 function barChart(el, rows, series){
   const W=960,H=300,L=64,R=8,T=10,B=28, iw=W-L-R, ih=H-T-B;
   const totais = rows.map(r => r.valores.reduce((a,b)=>a+b,0));
   const max = niceMax(Math.max(...totais, 1));
   const y = v => T + ih - v/max*ih;
   const bw = iw/(rows.length||1), gap = Math.min(4, bw*.2);
-  let s = `<svg viewBox="0 0 ${W}${H}" role="img">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   for(let i=0;i<=4;i++){ const v=max/4*i, yy=y(v);
     s += `<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/>`;
     s += `<text x="${L-6}" y="${yy+4}" text-anchor="end">${compact(v)}</text>`; }
@@ -117,4 +116,276 @@ function barChart(el, rows, series){
     let acc=0; const x = L+i*bw+gap/2, w = Math.max(1,bw-gap);
     r.valores.forEach((v,k)=>{ if(v<=0) return;
       const y0=y(acc+v), h=y(acc)-y0; acc+=v;
-      s += `<rect data-i="${i}" data-k="${k}" x="${x}" y="${y0}" width="${w}" height="${Math.max(h,0)}" fill="${series[k].cor}" rx="1.5"/>
+      s += `<rect data-i="${i}" data-k="${k}" x="${x}" y="${y0}" width="${w}" height="${Math.max(h,0)}" fill="${series[k].cor}" rx="1.5"/>`; });
+    if(i%passo===0) s += `<text x="${x+w/2}" y="${H-8}" text-anchor="middle">${r.label}</text>`;
+  });
+  s += `</svg>`;
+  el.innerHTML = s;
+  el.querySelectorAll("rect").forEach(rc => {
+    const r = rows[+rc.dataset.i], k = +rc.dataset.k;
+    bindTip(rc, `${r.label} · ${series[k].nome}: ${brl(r.valores[k])}` + (series.length>1 ? ` (total ${brl(r.valores.reduce((a,b)=>a+b,0))})`:""));
+  });
+}
+
+function donutChart(el, items){
+  const size=220, cx=110, cy=110, r=75, stroke=32;
+  const total = items.reduce((a,b)=>a+b.val,0);
+  let accumAngle = -Math.PI / 2;
+  let s = `<svg viewBox="0 0 ${size} ${size}">`;
+  
+  items.forEach(it => {
+    const sliceAngle = (it.val / total) * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(accumAngle);
+    const y1 = cy + r * Math.sin(accumAngle);
+    accumAngle += sliceAngle;
+    const x2 = cx + r * Math.cos(accumAngle);
+    const y2 = cy + r * Math.sin(accumAngle);
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+    const pathData = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+    s += `<path d="${pathData}" fill="none" stroke="${it.cor}" stroke-width="${stroke}" />`;
+  });
+  s += `<text x="${cx}" y="${cy-6}" text-anchor="middle" font-weight="bold" font-size="14">${compact(total)}</text>`;
+  s += `<text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="var(--muted)">Arrecadação</text>`;
+  s += `</svg>`;
+  el.innerHTML = s;
+}
+
+function legend(el, series){
+  el.innerHTML = series.length>1 ? series.map(s=>`<span><i style="background:${s.cor}"></i>${s.nome}</span>`).join("") : "";
+}
+
+function sufixo(){ return state.base==="corrigido" ? "_corrigido" : "_nominal"; }
+
+function filtrarPorEra(lista){
+  if(!Array.isArray(lista)) return [];
+  if(state.era === "pre") return lista.filter(r => (r.ano || parseInt(r.mes)) <= 2014);
+  if(state.era === "pos") return lista.filter(r => (r.ano || parseInt(r.mes)) >= 2015);
+  return lista;
+}
+
+function render(){
+  if(!state.d) return;
+  const d = state.d, suf = sufixo();
+  const resumoBruto = state.per==="ano" ? d.ano : d.mes;
+  const resumo = filtrarPorEra(resumoBruto);
+  const chave = state.per==="ano" ? "ano" : "mes";
+  
+  const brutoSum = resumo.reduce((a,b)=>a+(b["bruto"+suf]||0),0);
+  const irSum = resumo.reduce((a,b)=>a+(b["ir"+suf]||0),0);
+  const brutoNominal = resumo.reduce((a,b)=>a+(b["bruto_nominal"]||0),0);
+  const irNominal = resumo.reduce((a,b)=>a+(b["ir_nominal"]||0),0);
+
+  const rotulo = state.base==="corrigido" ? "corrigido (Selic/IPCA)" : "nominal";
+  
+  $("#kpis").innerHTML = [
+    ["Prêmios Brutos Pagos", compact(brutoSum), "Valor Nominal: " + compact(brutoNominal), "Total pago nas faixas"],
+    ["IRRF Arrecadado (União)", compact(irSum), "Valor Nominal: " + compact(irNominal), "Imposto de Renda retido"],
+    ["Alíquota Efetiva de IR", (brutoSum? irSum/brutoSum*100:0).toFixed(1)+"%", "IRRF ÷ Prêmios Brutos", "Percentual sobre o prêmio"],
+    ["Concursos Analisados", resumo.reduce((a,b)=>a+(b.concursos||0),0).toLocaleString("pt-BR"), "Até concurso "+(d.meta?.ultimo_concurso||""), fmtData(d.meta?.data_ultimo_concurso||"")],
+  ].map(([l,v,sub,t])=>`
+    <div class="card kpi">
+      <div class="l" title="${t}">${l}</div>
+      <div class="v">${v}</div>
+      <div class="v-sub">${sub}</div>
+    </div>`).join("");
+
+  $("#t1").textContent = `IR Arrecadado por ${state.per==="ano"?"Ano":"Mês"} (${rotulo})`;
+  barChart($("#c1"), resumo.map(r=>({label:r[chave], valores:[r["ir"+suf]||0]})), [{nome:"IR Arrecadado", cor:"var(--accent-2)"}]);
+
+  $("#t2").textContent = `Prêmios Brutos Pagos por ${state.per==="ano"?"Ano e Faixa":"Mês"} (${rotulo})`;
+  if(state.per==="ano"){
+    const faixas = [...new Map((d.faixa||[]).map(f=>[f.faixa,f.descricao])).entries()].sort((a,b)=>a[0]-b[0]);
+    const series = faixas.map(([n,desc],i)=>({nome:desc, cor:`var(--c${(i%6)+1})`}));
+    const rows = resumo.map(r=>({label:r.ano, valores:faixas.map(([n])=>{
+      const f = d.faixa.find(x=>x.ano===r.ano && x.faixa===n); return f? f["bruto"+suf]:0; })}));
+    barChart($("#c2"), rows, series); legend($("#l2"), series);
+  } else {
+    barChart($("#c2"), resumo.map(r=>({label:r.mes, valores:[r["bruto"+suf]||0]})), [{nome:"Bruto Pago", cor:"var(--c1)"}]);
+    legend($("#l2"), []);
+  }
+
+  const arrecEst = brutoSum / (state.era === "pre" ? 0.46 : 0.4335);
+  const repassesEst = arrecEst * 0.48;
+  const custosEst = arrecEst * 0.20;
+  
+  donutChart($("#c-donut"), [
+    { nome: "Prêmios Líquidos", val: Math.max(0, brutoSum - irSum), cor: "var(--c1)" },
+    { nome: "Repasses Sociais (Governo)", val: repassesEst, cor: "var(--c3)" },
+    { nome: "IRRF (União)", val: irSum, cor: "var(--c2)" },
+    { nome: "Custo Operacional & Lotéricas", val: custosEst, cor: "var(--c5)" }
+  ]);
+  legend($("#l-donut"), [
+    { nome: "Prêmios Líquidos (31%)", cor: "var(--c1)" },
+    { nome: "Repasses Sociais (48%)", cor: "var(--c3)" },
+    { nome: "IRRF na Fonte (13%)", cor: "var(--c2)" },
+    { nome: "Custos & Lotéricas (20%)", cor: "var(--c5)" }
+  ]);
+
+  $("#tp-h").innerHTML = `<tr><th>${state.per==="ano"?"Ano":"Mês"}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
+  $("#tp-b").innerHTML = [...resumo].reverse().map(r=>{
+    const b=r["bruto"+suf]||0, i=r["ir"+suf]||0;
+    return `<tr><td>${r[chave]}</td><td>${r.concursos}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
+    
+  renderConcursos();
+  renderSimulador();
+}
+
+function renderConcursos(){
+  const suf = sufixo(), q = ($("#busca")?.value||"").trim();
+  let rows = filtrarPorEra(state.d?.concursos || []);
+  if(q) rows = rows.filter(r => String(r.concurso).includes(q) || fmtData(r.data).includes(q));
+  rows = [...rows].reverse().slice(0,200);
+  $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
+    || `<tr><td colspan="4" class="empty">Nenhum concurso encontrado</td></tr>`;
+}
+
+function renderSimulador(){
+  const selAno = $("#simAno");
+  if(!selAno || !state.d || !state.d.ano) return;
+  const anos = state.d.ano.map(a => a.ano).sort((a,b)=>b-a);
+  selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
+  calcSimulacao();
+}
+
+function calcSimulacao(){
+  const anoVal = parseInt($("#simAno")?.value);
+  const valVal = parseFloat($("#simVal")?.value || 0);
+  if(!anoVal || !valVal || !state.d) return;
+  
+  const regAno = state.d.ano.find(a => a.ano === anoVal);
+  if(!regAno || !regAno.bruto_nominal) return;
+  
+  const fator = regAno.bruto_corrigido / regAno.bruto_nominal;
+  const valCorrigido = valVal * fator;
+  
+  $("#simRes").innerHTML = `O prêmio de <strong>${brl(valVal)}</strong> em ${anoVal} equivale a aproximadamente <br><span style="font-size:22px">${brl(valCorrigido)}</span> a valores presentes (Selic/IPCA).`;
+}
+
+function esqueleto(){
+  $("#app").innerHTML = `
+    <div class="controls">
+      <div class="seg" id="sBase">
+        <button data-v="corrigido" aria-pressed="true">Corrigido (Selic/IPCA)</button>
+        <button data-v="nominal" aria-pressed="false">Nominal</button>
+      </div>
+      <div class="seg" id="sPer">
+        <button data-v="ano" aria-pressed="true">Por Ano</button>
+        <button data-v="mes" aria-pressed="false">Por Mês</button>
+      </div>
+      <div class="seg" id="sEra">
+        <button data-v="todas" aria-pressed="true">Todas as Eras</button>
+        <button data-v="pre" aria-pressed="false">Pré-2015</button>
+        <button data-v="pos" aria-pressed="false">Pós-2015</button>
+      </div>
+    </div>
+    
+    <div class="kpis" id="kpis"></div>
+    
+    <div class="grid">
+      <div class="grid-2col">
+        <div class="card">
+          <h2>Distribuição Estimada da Arrecadação</h2>
+          <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
+          <div class="legend" id="l-donut"></div>
+        </div>
+        <div class="card">
+          <h2>Simulador de Correção de Prêmios</h2>
+          <p class="sub">Descubra quanto um prêmio recebido no passado valeria hoje:</p>
+          <div class="sim-box">
+            <div>
+              <label class="sub">Ano do Sorteio:</label><br>
+              <select id="simAno" style="margin-top:4px;"></select>
+            </div>
+            <div>
+              <label class="sub">Valor Recebido (R$):</label><br>
+              <input type="number" id="simVal" value="1000000" step="50000" style="margin-top:4px;width:140px;">
+            </div>
+          </div>
+          <div class="sim-res" id="simRes"></div>
+        </div>
+      </div>
+
+      <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
+      <div class="card"><h2 id="t2"></h2><div id="c2"></div><div class="legend" id="l2"></div></div>
+      <div class="card"><h2>Resumo por Período</h2><div class="scroll"><table><thead id="tp-h"></thead><tbody id="tp-b"></tbody></table></div></div>
+      <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº ou data)</span></h2>
+        <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso ou data…"></p>
+        <div class="scroll"><table><thead><tr><th>Concurso</th><th>Data</th><th>Bruto Pago</th><th>IR Arrecadado</th></tr></thead><tbody id="tc-b"></tbody></table></div></div>
+      <div class="card"><h2>Downloads & Dados Abertos</h2>
+        <a id="dl" href="#" download>faixas.csv</a> — Faixas de acerto por concurso, com valores nominais e corrigidos (Selic/IPCA).</div>
+    </div>`;
+
+  for(const [id,key] of [["#sBase","base"],["#sPer","per"],["#sEra","era"]]){
+    $(id).addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
+      state[key] = b.dataset.v; $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); render(); });
+  }
+  
+  $("#busca").addEventListener("input", renderConcursos);
+  $("#simAno")?.addEventListener("change", calcSimulacao);
+  $("#simVal")?.addEventListener("input", calcSimulacao);
+}
+
+async function carregar(slug){
+  state.slug = slug;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.s===slug));
+  
+  // Testar múltiplos caminhos de dados automaticamente
+  const tentativas = [
+    `data/${slug}/`,
+    `docs/data/${slug}/`,
+    `./data/${slug}/`
+  ];
+  
+  let dadosCarregados = null;
+  let baseUsada = "";
+
+  for(const path of tentativas){
+    try{
+      const [meta, ano, mes, faixa, concursos] = await Promise.all(
+        ["meta","resumo_ano","resumo_mes","resumo_ano_faixa","concursos"].map(n=>getJSON(path+n+".json")));
+      dadosCarregados = {meta, ano, mes, faixa, concursos};
+      baseUsada = path;
+      break;
+    }catch(e){
+      continue;
+    }
+  }
+
+  if(!dadosCarregados){
+    $("#app").innerHTML = `<div class="card empty">Ainda não há dados carregados para esta loteria.<br>Verifique se os arquivos JSON estão no repositório.</div>`;
+    $("#banner").innerHTML=""; $("#atualizado").textContent=""; return;
+  }
+
+  state.d = dadosCarregados;
+  state.basePath = baseUsada;
+  
+  const m = state.d.meta;
+  $("#atualizado").textContent = `Atualizado em ${new Date(m.atualizado_em).toLocaleString("pt-BR")} · Selic até ${fmtData(m.selic_ate)}`;
+  $("#banner").innerHTML = m.regras_ir_conferidas ? "" :
+    `<div class="banner"><b>Atenção:</b> as regras de IR (limite de isenção por período) ainda não foram conferidas com a legislação. Os valores de IR são provisórios.</div>`;
+    
+  esqueleto(); 
+  $("#dl").href = baseUsada+"faixas.csv"; 
+  render();
+}
+
+(async function init(){
+  let lista=[]; 
+  const caminhosMeta = ["data/loterias.json", "docs/data/loterias.json", "./data/loterias.json"];
+  for(const p of caminhosMeta){
+    try{ lista = await getJSON(p); if(lista.length) break; }catch(e){}
+  }
+  
+  if(!lista.length){ 
+    $("#app").innerHTML = `<div class="card empty">Carregando dados das loterias…</div>`; 
+    return; 
+  }
+  
+  $("#tabs").innerHTML = lista.map(l=>`<button data-s="${l.slug}" aria-pressed="false">${l.nome}</button>`).join("");
+  $("#tabs").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) carregar(b.dataset.s); });
+  if(lista.length<2) $("#tabs").style.display="none";
+  carregar(lista[0].slug);
+})();
+</script>
+</body>
+</html>
