@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Histórico das Loterias</title>
+<title>Histórico das Loterias CAIXA</title>
 <style>
 :root{
   --bg:#f6f5f1; --card:#ffffff; --ink:#1c1b19; --muted:#6b675f; --line:#e3e0d8;
@@ -24,18 +24,27 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+.wrap{max-width:1150px;margin:0 auto;padding:24px 16px 64px}
 header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:16px}
 h1{font-size:24px;margin:0;letter-spacing:-.01em}
 h2{font-size:16px;margin:0 0 12px}
 .sub{color:var(--muted);font-size:13px}
 .banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px}
-.tabs,.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
-.tabs button,.seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;cursor:pointer}
-.tabs button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+
+/* Painel de Filtros Avançados */
+.filter-panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.filter-title{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--ink)}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:14px}
+.checkbox-item{display:inline-flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;user-select:none}
+.checkbox-item input[type="checkbox"]{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+.year-filter{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding-top:10px;border-top:1px dashed var(--line)}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .controls{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0 16px;align-items:center}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
 .kpi .v{font-size:22px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--accent)}
 .kpi .v-sub{font-size:13px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
 .kpi .l{color:var(--muted);font-size:13px;font-weight:600}
@@ -53,6 +62,7 @@ th:first-child,td:first-child{text-align:left}
 th{color:var(--muted);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}
 .scroll{overflow:auto;max-height:420px}
 input[type=search], input[type=number], select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+input[type=number]{width:90px}
 input[type=search]{min-width:200px}
 a{color:var(--accent)}
 .empty{padding:40px 16px;text-align:center;color:var(--muted)}
@@ -65,10 +75,27 @@ a{color:var(--accent)}
 <body>
 <div class="wrap">
   <header>
-    <h1>Histórico das Loterias</h1>
+    <h1>Histórico das Loterias CAIXA</h1>
     <div class="sub" id="atualizado"></div>
   </header>
-  <div id="tabs" class="tabs" role="group" aria-label="Loteria"></div>
+  
+  <!-- Painel de Seleção de Loterias e Período -->
+  <div class="filter-panel">
+    <div class="filter-title">Selecione as Loterias para Analisar:</div>
+    <div class="checkbox-group" id="lotteryCheckboxes">
+      <label class="checkbox-item">
+        <input type="checkbox" id="chkAll" checked> <strong>TODAS AS LOTERIAS</strong>
+      </label>
+    </div>
+    
+    <div class="year-filter">
+      <span style="font-weight:600;font-size:13px;">Filtrar Período (Ano):</span>
+      <label class="sub">De: <input type="number" id="anoDe" placeholder="Ex: 1996" min="1996" max="2026"></label>
+      <label class="sub">Até: <input type="number" id="anoAte" placeholder="Ex: 2026" min="1996" max="2026"></label>
+      <span class="sub">(Deixe em branco para todo o histórico)</span>
+    </div>
+  </div>
+
   <div id="banner"></div>
   <div id="app"></div>
   <div class="note" id="notas"></div>
@@ -87,11 +114,20 @@ const compact = n => {
   return "R$ " + Math.round(n);
 };
 const fmtData = iso => iso ? iso.split("-").reverse().join("/") : "";
-const state = { slug:null, base:"corrigido", per:"ano", era:"todas", d:null, basePath:"" };
+
+const state = { 
+  loteriasLista: [],
+  selectedSlugs: [],
+  base: "corrigido", 
+  per: "ano", 
+  era: "todas", 
+  d: null,
+  anoDe: null,
+  anoAte: null
+};
 
 async function getJSON(p){ const r = await fetch(p); if(!r.ok) throw new Error(p); return r.json(); }
 
-/* ---------- gráficos SVG ---------- */
 const tip = $("#tip");
 function bindTip(el, text){
   el.addEventListener("mousemove", e => { tip.textContent = text; tip.style.display="block";
@@ -134,7 +170,7 @@ function donutChart(el, items){
   let s = `<svg viewBox="0 0 ${size} ${size}">`;
   
   items.forEach(it => {
-    const sliceAngle = (it.val / total) * 2 * Math.PI;
+    const sliceAngle = (total > 0 ? (it.val / total) : 0) * 2 * Math.PI;
     const x1 = cx + r * Math.cos(accumAngle);
     const y1 = cy + r * Math.sin(accumAngle);
     accumAngle += sliceAngle;
@@ -156,18 +192,23 @@ function legend(el, series){
 
 function sufixo(){ return state.base==="corrigido" ? "_corrigido" : "_nominal"; }
 
-function filtrarPorEra(lista){
+function filtrarPorAnoEERA(lista){
   if(!Array.isArray(lista)) return [];
-  if(state.era === "pre") return lista.filter(r => (r.ano || parseInt(r.mes)) <= 2014);
-  if(state.era === "pos") return lista.filter(r => (r.ano || parseInt(r.mes)) >= 2015);
-  return lista;
+  return lista.filter(r => {
+    const ano = r.ano || parseInt(r.mes);
+    if(state.anoDe && ano < state.anoDe) return false;
+    if(state.anoAte && ano > state.anoAte) return false;
+    if(state.era === "pre" && ano > 2014) return false;
+    if(state.era === "pos" && ano < 2015) return false;
+    return true;
+  });
 }
 
 function render(){
   if(!state.d) return;
   const d = state.d, suf = sufixo();
   const resumoBruto = state.per==="ano" ? d.ano : d.mes;
-  const resumo = filtrarPorEra(resumoBruto);
+  const resumo = filtrarPorAnoEERA(resumoBruto);
   const chave = state.per==="ano" ? "ano" : "mes";
   
   const brutoSum = resumo.reduce((a,b)=>a+(b["bruto"+suf]||0),0);
@@ -181,7 +222,7 @@ function render(){
     ["Prêmios Brutos Pagos", compact(brutoSum), "Valor Nominal: " + compact(brutoNominal), "Total pago nas faixas"],
     ["IRRF Arrecadado (União)", compact(irSum), "Valor Nominal: " + compact(irNominal), "Imposto de Renda retido"],
     ["Alíquota Efetiva de IR", (brutoSum? irSum/brutoSum*100:0).toFixed(1)+"%", "IRRF ÷ Prêmios Brutos", "Percentual sobre o prêmio"],
-    ["Concursos Analisados", resumo.reduce((a,b)=>a+(b.concursos||0),0).toLocaleString("pt-BR"), "Até concurso "+(d.meta?.ultimo_concurso||""), fmtData(d.meta?.data_ultimo_concurso||"")],
+    ["Concursos Analisados", resumo.reduce((a,b)=>a+(b.concursos||0),0).toLocaleString("pt-BR"), "Loterias: " + state.selectedSlugs.join(", "), ""],
   ].map(([l,v,sub,t])=>`
     <div class="card kpi">
       <div class="l" title="${t}">${l}</div>
@@ -192,19 +233,11 @@ function render(){
   $("#t1").textContent = `IR Arrecadado por ${state.per==="ano"?"Ano":"Mês"} (${rotulo})`;
   barChart($("#c1"), resumo.map(r=>({label:r[chave], valores:[r["ir"+suf]||0]})), [{nome:"IR Arrecadado", cor:"var(--accent-2)"}]);
 
-  $("#t2").textContent = `Prêmios Brutos Pagos por ${state.per==="ano"?"Ano e Faixa":"Mês"} (${rotulo})`;
-  if(state.per==="ano"){
-    const faixas = [...new Map((d.faixa||[]).map(f=>[f.faixa,f.descricao])).entries()].sort((a,b)=>a[0]-b[0]);
-    const series = faixas.map(([n,desc],i)=>({nome:desc, cor:`var(--c${(i%6)+1})`}));
-    const rows = resumo.map(r=>({label:r.ano, valores:faixas.map(([n])=>{
-      const f = d.faixa.find(x=>x.ano===r.ano && x.faixa===n); return f? f["bruto"+suf]:0; })}));
-    barChart($("#c2"), rows, series); legend($("#l2"), series);
-  } else {
-    barChart($("#c2"), resumo.map(r=>({label:r.mes, valores:[r["bruto"+suf]||0]})), [{nome:"Bruto Pago", cor:"var(--c1)"}]);
-    legend($("#l2"), []);
-  }
+  $("#t2").textContent = `Prêmios Brutos Pagos por ${state.per==="ano"?"Ano":"Mês"} (${rotulo})`;
+  barChart($("#c2"), resumo.map(r=>({label:r[chave], valores:[r["bruto"+suf]||0]})), [{nome:"Bruto Pago", cor:"var(--c1)"}]);
+  legend($("#l2"), []);
 
-  const arrecEst = brutoSum / (state.era === "pre" ? 0.46 : 0.4335);
+  const arrecEst = brutoSum / 0.4335;
   const repassesEst = arrecEst * 0.48;
   const custosEst = arrecEst * 0.20;
   
@@ -224,7 +257,7 @@ function render(){
   $("#tp-h").innerHTML = `<tr><th>${state.per==="ano"?"Ano":"Mês"}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
   $("#tp-b").innerHTML = [...resumo].reverse().map(r=>{
     const b=r["bruto"+suf]||0, i=r["ir"+suf]||0;
-    return `<tr><td>${r[chave]}</td><td>${r.concursos}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
+    return `<tr><td>${r[chave]}</td><td>${r.concursos||0}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
     
   renderConcursos();
   renderSimulador();
@@ -232,7 +265,7 @@ function render(){
 
 function renderConcursos(){
   const suf = sufixo(), q = ($("#busca")?.value||"").trim();
-  let rows = filtrarPorEra(state.d?.concursos || []);
+  let rows = filtrarPorAnoEERA(state.d?.concursos || []);
   if(q) rows = rows.filter(r => String(r.concurso).includes(q) || fmtData(r.data).includes(q));
   rows = [...rows].reverse().slice(0,200);
   $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
@@ -311,8 +344,6 @@ function esqueleto(){
       <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº ou data)</span></h2>
         <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso ou data…"></p>
         <div class="scroll"><table><thead><tr><th>Concurso</th><th>Data</th><th>Bruto Pago</th><th>IR Arrecadado</th></tr></thead><tbody id="tc-b"></tbody></table></div></div>
-      <div class="card"><h2>Downloads & Dados Abertos</h2>
-        <a id="dl" href="#" download>faixas.csv</a> — Faixas de acerto por concurso, com valores nominais e corrigidos (Selic/IPCA).</div>
     </div>`;
 
   for(const [id,key] of [["#sBase","base"],["#sPer","per"],["#sEra","era"]]){
@@ -320,53 +351,103 @@ function esqueleto(){
       state[key] = b.dataset.v; $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); render(); });
   }
   
-  $("#busca").addEventListener("input", renderConcursos);
+  $("#busca")?.addEventListener("input", renderConcursos);
   $("#simAno")?.addEventListener("change", calcSimulacao);
   $("#simVal")?.addEventListener("input", calcSimulacao);
 }
 
-async function carregar(slug){
-  state.slug = slug;
-  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.s===slug));
+// Carrega e consolida dados de múltiplas loterias simultaneamente
+async function carregarSelecionadas(){
+  if(!state.selectedSlugs.length) return;
   
-  // Testar múltiplos caminhos de dados automaticamente
-  const tentativas = [
-    `data/${slug}/`,
-    `docs/data/${slug}/`,
-    `./data/${slug}/`
-  ];
-  
-  let dadosCarregados = null;
-  let baseUsada = "";
-
-  for(const path of tentativas){
-    try{
-      const [meta, ano, mes, faixa, concursos] = await Promise.all(
-        ["meta","resumo_ano","resumo_mes","resumo_ano_faixa","concursos"].map(n=>getJSON(path+n+".json")));
-      dadosCarregados = {meta, ano, mes, faixa, concursos};
-      baseUsada = path;
-      break;
-    }catch(e){
-      continue;
+  const loteriasDados = [];
+  for(const slug of state.selectedSlugs){
+    const tentativas = [`data/${slug}/`, `docs/data/${slug}/`, `./data/${slug}/`];
+    for(const path of tentativas){
+      try{
+        const [meta, ano, mes, faixa, concursos] = await Promise.all(
+          ["meta","resumo_ano","resumo_mes","resumo_ano_faixa","concursos"].map(n=>getJSON(path+n+".json")));
+        loteriasDados.push({meta, ano, mes, faixa, concursos});
+        break;
+      }catch(e){ continue; }
     }
   }
 
-  if(!dadosCarregados){
-    $("#app").innerHTML = `<div class="card empty">Ainda não há dados carregados para esta loteria.<br>Verifique se os arquivos JSON estão no repositório.</div>`;
-    $("#banner").innerHTML=""; $("#atualizado").textContent=""; return;
+  if(!loteriasDados.length){
+    $("#app").innerHTML = `<div class="card empty">Selecione ao menos uma loteria com dados disponíveis.</div>`;
+    return;
   }
 
-  state.d = dadosCarregados;
-  state.basePath = baseUsada;
-  
-  const m = state.d.meta;
-  $("#atualizado").textContent = `Atualizado em ${new Date(m.atualizado_em).toLocaleString("pt-BR")} · Selic até ${fmtData(m.selic_ate)}`;
-  $("#banner").innerHTML = m.regras_ir_conferidas ? "" :
-    `<div class="banner"><b>Atenção:</b> as regras de IR (limite de isenção por período) ainda não foram conferidas com a legislação. Os valores de IR são provisórios.</div>`;
-    
+  // Agrega dados de todas as loterias selecionadas
+  const anoMap = {}, mesMap = {}, concursosList = [];
+  loteriasDados.forEach(d => {
+    (d.ano || []).forEach(r => {
+      if(!anoMap[r.ano]) anoMap[r.ano] = {ano: r.ano, concursos:0, bruto_corrigido:0, bruto_nominal:0, ir_corrigido:0, ir_nominal:0};
+      anoMap[r.ano].concursos += r.concursos || 0;
+      anoMap[r.ano].bruto_corrigido += r.bruto_corrigido || 0;
+      anoMap[r.ano].bruto_nominal += r.bruto_nominal || 0;
+      anoMap[r.ano].ir_corrigido += r.ir_corrigido || 0;
+      anoMap[r.ano].ir_nominal += r.ir_nominal || 0;
+    });
+    (d.mes || []).forEach(r => {
+      if(!mesMap[r.mes]) mesMap[r.mes] = {mes: r.mes, concursos:0, bruto_corrigido:0, bruto_nominal:0, ir_corrigido:0, ir_nominal:0};
+      mesMap[r.mes].concursos += r.concursos || 0;
+      mesMap[r.mes].bruto_corrigido += r.bruto_corrigido || 0;
+      mesMap[r.mes].bruto_nominal += r.bruto_nominal || 0;
+      mesMap[r.mes].ir_corrigido += r.ir_corrigido || 0;
+      mesMap[r.mes].ir_nominal += r.ir_nominal || 0;
+    });
+    (d.concursos || []).forEach(c => concursosList.push(c));
+  });
+
+  state.d = {
+    meta: loteriasDados[0].meta,
+    ano: Object.values(anoMap).sort((a,b)=>a.ano-b.ano),
+    mes: Object.values(mesMap).sort((a,b)=>a.mes.localeCompare(b.mes)),
+    concursos: concursosList.sort((a,b)=>b.concurso-a.concurso)
+  };
+
+  $("#atualizado").textContent = `Atualizado em ${new Date(state.d.meta.atualizado_em).toLocaleString("pt-BR")}`;
   esqueleto(); 
-  $("#dl").href = baseUsada+"faixas.csv"; 
   render();
+}
+
+function renderCheckboxes(){
+  const container = $("#lotteryCheckboxes");
+  let html = `
+    <label class="checkbox-item">
+      <input type="checkbox" id="chkAll" ${state.selectedSlugs.length === state.loteriasLista.length ? "checked" : ""}> 
+      <strong>TODAS AS LOTERIAS</strong>
+    </label>
+  `;
+  
+  state.loteriasLista.forEach(l => {
+    const isChecked = state.selectedSlugs.includes(l.slug);
+    html += `
+      <label class="checkbox-item">
+        <input type="checkbox" class="chkLot" data-slug="${l.slug}" ${isChecked ? "checked" : ""}> ${l.nome}
+      </label>
+    `;
+  });
+  
+  container.innerHTML = html;
+
+  // Event Listeners dos Checkboxes
+  $("#chkAll").addEventListener("change", e => {
+    const isChecked = e.target.checked;
+    document.querySelectorAll(".chkLot").forEach(c => c.checked = isChecked);
+    state.selectedSlugs = isChecked ? state.loteriasLista.map(l => l.slug) : [];
+    carregarSelecionadas();
+  });
+
+  document.querySelectorAll(".chkLot").forEach(chk => {
+    chk.addEventListener("change", () => {
+      const selected = Array.from(document.querySelectorAll(".chkLot:checked")).map(c => c.dataset.slug);
+      state.selectedSlugs = selected;
+      $("#chkAll").checked = (selected.length === state.loteriasLista.length);
+      carregarSelecionadas();
+    });
+  });
 }
 
 (async function init(){
@@ -381,10 +462,23 @@ async function carregar(slug){
     return; 
   }
   
-  $("#tabs").innerHTML = lista.map(l=>`<button data-s="${l.slug}" aria-pressed="false">${l.nome}</button>`).join("");
-  $("#tabs").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) carregar(b.dataset.s); });
-  if(lista.length<2) $("#tabs").style.display="none";
-  carregar(lista[0].slug);
+  state.loteriasLista = lista;
+  state.selectedSlugs = lista.map(l => l.slug); // Padrão: Todas selecionadas
+  
+  renderCheckboxes();
+  
+  // Event listeners dos inputs de ano
+  $("#anoDe").addEventListener("input", e => {
+    state.anoDe = e.target.value ? parseInt(e.target.value) : null;
+    render();
+  });
+  
+  $("#anoAte").addEventListener("input", e => {
+    state.anoAte = e.target.value ? parseInt(e.target.value) : null;
+    render();
+  });
+
+  carregarSelecionadas();
 })();
 </script>
 </body>
