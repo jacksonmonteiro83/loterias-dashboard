@@ -59,7 +59,7 @@ def _get_json(url, tentativas=5):
 
 def fetch_ultimo(slug):
     res = _get_json(f"{CAIXA}/{slug}")
-    if not res or "numero" not in res:
+    if not res or not isinstance(res, dict) or "numero" not in res:
         raise RuntimeError(f"Nao foi possivel obter o ultimo concurso de {slug}")
     return int(res["numero"])
 
@@ -206,7 +206,7 @@ def calcular(raw, selic, regras, hoje):
     f = tabela_faixas(raw, hoje)
     if f.empty:
         return f, pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-        
+
     f["fator_selic"] = fator_selic(f["data"], selic, hoje)
     f = aplicar_ir(f, regras)
     f["bruto_corrigido"] = f["bruto_nominal"] * f["fator_selic"]
@@ -245,67 +245,4 @@ def gravar(slug, nome, saida, f, pc, por_ano, por_mes, por_ano_faixa, meta):
     comp = {"separators": (",", ":"), "ensure_ascii": False}
     for nome_arq, df in [("resumo_ano", por_ano), ("resumo_mes", por_mes),
                          ("resumo_ano_faixa", por_ano_faixa),
-                         ("concursos", pc.drop(columns=["ano", "mes"]))]:
-        (d / f"{nome_arq}.json").write_text(json.dumps(_records(df), **comp), encoding="utf-8")
-    csv = f.drop(columns=["ano"], errors="ignore").copy()
-    cols_f = csv.select_dtypes("float").columns
-    csv[cols_f] = csv[cols_f].round(6)
-    csv.to_csv(d / "faixas.csv", index=False, date_format="%Y-%m-%d")
-    (d / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
-
-
-def main(argv=None, root=ROOT, hoje=None):
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--so-calcular", action="store_true",
-                    help="nao baixa nada; recalcula a partir de data/")
-    a = ap.parse_args(argv)
-    hoje = hoje or datetime.now(ZoneInfo("America/Sao_Paulo")).date()
-
-    regras = pd.read_csv(root / "regras_ir.csv", parse_dates=["vigencia_inicio"])
-    regras_ok = bool((regras["conferido"] == "sim").all())
-    if not regras_ok:
-        print("AVISO: regras_ir.csv tem linhas nao conferidas (conferido != sim).", file=sys.stderr)
-
-    saida = root / "docs" / "data"
-    indice = []
-    
-    # Execução resiliente por modalidade
-    for slug, cfg in LOTERIAS.items():
-        try:
-            if a.so_calcular:
-                raw = {int(k): v for k, v in json.loads(
-                    (root / "data" / "raw" / f"{slug}.json").read_text("utf-8")).items()}
-                selic = pd.read_csv(root / "data" / "selic.csv", parse_dates=["data"])
-            else:
-                raw = atualizar_raw(slug, root / "data" / "raw")
-                selic = atualizar_selic(root / "data" / "selic.csv", cfg["primeiro_concurso"], hoje)
-            
-            f, pc, por_ano, por_mes, por_ano_faixa = calcular(raw, selic, regras, hoje)
-            
-            if pc.empty:
-                continue
-
-            meta = {
-                "loteria": slug, "nome": cfg["nome"],
-                "atualizado_em": datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat(timespec="seconds"),
-                "data_corrente": hoje.isoformat(),
-                "concursos": int(pc["concurso"].nunique()),
-                "ultimo_concurso": int(pc["concurso"].max()),
-                "data_ultimo_concurso": pc["data"].max().strftime("%Y-%m-%d"),
-                "selic_ate": selic["data"].max().strftime("%Y-%m-%d"),
-                "regras_ir_conferidas": regras_ok,
-                "totais": {c: round(float(pc[c].sum()), 2) for c in VALORES},
-            }
-            gravar(slug, cfg["nome"], saida, f, pc, por_ano, por_mes, por_ano_faixa, meta)
-            indice.append({"slug": slug, "nome": cfg["nome"]})
-            print(f"[{slug}] Sucesso: {meta['concursos']} concursos processados.", file=sys.stderr)
-        except Exception as err:
-            print(f"ERRO ao processar [{slug}]: {err}", file=sys.stderr)
-
-    # Grava o indice de loterias disponiveis
-    if indice:
-        (saida / "loterias.json").write_text(json.dumps(indice, ensure_ascii=False), encoding="utf-8")
-
-
-if __name__ == "__main__":
-    main()
+                         ("concursos", pc
