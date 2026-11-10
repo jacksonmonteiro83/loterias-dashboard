@@ -6,8 +6,6 @@ Fluxo (idempotente, pode rodar todo dia):
   1. Baixa so os concursos novos da Caixa  -> data/raw/<loteria>.json
   2. Baixa so os dias novos da Selic (SGS 11) -> data/selic.csv
   3. Recalcula bruto, correcao pela Selic e IR -> docs/data/<loteria>/*.json|csv
-
-Para incluir outra loteria, adicione uma entrada em LOTERIAS (slug da API da Caixa).
 """
 import argparse
 import json
@@ -23,11 +21,19 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# CATALOGO COMPLETO DAS LOTERIAS DA CAIXA
 LOTERIAS = {
-    "megasena": {"nome": "Mega-Sena", "primeiro_concurso": date(1996, 3, 11)},
-    # "quina": {"nome": "Quina", "primeiro_concurso": date(1994, 3, 13)},
-    # "lotofacil": {"nome": "Lotofácil", "primeiro_concurso": date(2003, 9, 29)},
+    "megasena":  {"nome": "Mega-Sena",  "primeiro_concurso": date(1996, 3, 11)},
+    "lotofacil": {"nome": "Lotofácil",  "primeiro_concurso": date(2003, 9, 29)},
+    "quina":     {"nome": "Quina",      "primeiro_concurso": date(1994, 3, 13)},
+    "lotomania": {"nome": "Lotomania",  "primeiro_concurso": date(1999, 10, 2)},
+    "duplasena": {"nome": "Dupla Sena", "primeiro_concurso": date(2001, 11, 6)},
+    "timemania": {"nome": "Timemania",  "primeiro_concurso": date(2008, 3, 1)},
+    "diadesorte":{"nome": "Dia de Sorte","primeiro_concurso": date(2018, 5, 19)},
+    "supersete": {"nome": "Super Sete", "primeiro_concurso": date(2020, 10, 2)},
 }
+
 CAIXA = "https://servicebus2.caixa.gov.br/portaldeloterias/api"
 SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados"
 HEADERS = {"User-Agent": "Mozilla/5.0 (historico-loterias)", "Accept": "application/json"}
