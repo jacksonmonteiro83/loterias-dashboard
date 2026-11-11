@@ -68,8 +68,9 @@ a{color:var(--accent)}
 .empty{padding:40px 16px;text-align:center;color:var(--muted)}
 .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:5px 9px;border-radius:6px;font-size:12px;display:none;z-index:10;white-space:nowrap}
 .note{color:var(--muted);font-size:12px;margin-top:10px}
-.sim-box{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px}
-.sim-res{font-size:18px;font-weight:600;color:var(--accent);margin-top:8px}
+.donut-pct{fill:#fff;font-size:12px;font-weight:700;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:2.5px;stroke-linejoin:round}
+.donut-total{fill:var(--ink);font-size:17px;font-weight:700}
+.donut-sub{fill:var(--muted);font-size:11px}
 </style>
 </head>
 <body>
@@ -163,27 +164,32 @@ function barChart(el, rows, series){
   });
 }
 
+const pctStr = v => v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + "%";
+
+// Rosca com o percentual de cada fatia escrito dentro dela (fatias < 3,5% ficam só na legenda).
 function donutChart(el, items){
-  const size=220, cx=110, cy=110, r=75, stroke=32;
+  const size=280, cx=140, cy=140, r=100, stroke=52;
   const total = items.reduce((a,b)=>a+b.val,0);
-  let accumAngle = -Math.PI / 2;
-  let s = `<svg viewBox="0 0 ${size} ${size}">`;
-  
+  let ang = -Math.PI / 2, fatias = "", rotulos = "";
   items.forEach(it => {
-    const sliceAngle = (total > 0 ? (it.val / total) : 0) * 2 * Math.PI;
-    const x1 = cx + r * Math.cos(accumAngle);
-    const y1 = cy + r * Math.sin(accumAngle);
-    accumAngle += sliceAngle;
-    const x2 = cx + r * Math.cos(accumAngle);
-    const y2 = cy + r * Math.sin(accumAngle);
-    const largeArc = sliceAngle > Math.PI ? 1 : 0;
-    const pathData = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
-    s += `<path d="${pathData}" fill="none" stroke="${it.cor}" stroke-width="${stroke}" />`;
+    const sl = (total > 0 ? it.val / total : 0) * 2 * Math.PI;
+    if(sl <= 0) return;
+    const a1 = ang, a2 = ang + sl; ang = a2;
+    if(sl >= 2*Math.PI - 1e-6){
+      fatias += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
+    } else {
+      const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1), x2 = cx + r*Math.cos(a2), y2 = cy + r*Math.sin(a2);
+      fatias += `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${sl > Math.PI ? 1 : 0} 1 ${x2} ${y2}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
+    }
+    const pct = it.val / total * 100;
+    if(pct >= 3.5){
+      const m = (a1 + a2) / 2;
+      rotulos += `<text class="donut-pct" x="${cx + r*Math.cos(m)}" y="${cy + r*Math.sin(m)}" text-anchor="middle" dominant-baseline="central">${pctStr(pct)}</text>`;
+    }
   });
-  s += `<text x="${cx}" y="${cy-6}" text-anchor="middle" font-weight="bold" font-size="14">${compact(total)}</text>`;
-  s += `<text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="var(--muted)">Arrecadação</text>`;
-  s += `</svg>`;
-  el.innerHTML = s;
+  el.innerHTML = `<svg viewBox="0 0 ${size} ${size}" role="img" style="max-width:300px">${fatias}${rotulos}
+    <text class="donut-total" x="${cx}" y="${cy-6}" text-anchor="middle">${compact(total)}</text>
+    <text class="donut-sub" x="${cx}" y="${cy+13}" text-anchor="middle">Total estimado</text></svg>`;
 }
 
 function legend(el, series){
@@ -242,18 +248,16 @@ function render(){
   const repassesEst = arrecEst * 0.48;
   const custosEst = arrecEst * 0.20;
   
-  donutChart($("#c-donut"), [
+  const fatias = [
     { nome: "Prêmios Líquidos", val: Math.max(0, brutoSum - irSum), cor: "var(--c1)" },
     { nome: "Repasses Sociais (Governo)", val: repassesEst, cor: "var(--c3)" },
     { nome: "IRRF (União)", val: irSum, cor: "var(--c2)" },
     { nome: "Custo Operacional & Lotéricas", val: custosEst, cor: "var(--c5)" }
-  ]);
-  legend($("#l-donut"), [
-    { nome: "Prêmios Líquidos (31%)", cor: "var(--c1)" },
-    { nome: "Repasses Sociais (48%)", cor: "var(--c3)" },
-    { nome: "IRRF na Fonte (13%)", cor: "var(--c2)" },
-    { nome: "Custos & Lotéricas (20%)", cor: "var(--c5)" }
-  ]);
+  ];
+  donutChart($("#c-donut"), fatias);
+  const totalFatias = fatias.reduce((a,f)=>a+f.val,0);
+  // legenda com os mesmos percentuais escritos na rosca (calculados dos mesmos valores)
+  legend($("#l-donut"), fatias.map(f => ({ nome: `${f.nome} (${pctStr(totalFatias ? f.val/totalFatias*100 : 0)})`, cor: f.cor })));
 
   $("#tp-h").innerHTML = `<tr><th>${state.per==="ano"?"Ano":"Mês"}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
   $("#tp-b").innerHTML = [...resumo].reverse().map(r=>{
@@ -269,7 +273,6 @@ function render(){
     || `<tr><td colspan="5" class="empty">Sem dados no período</td></tr>`;
 
   renderConcursos();
-  renderSimulador();
 }
 
 function renderConcursos(){
@@ -279,28 +282,6 @@ function renderConcursos(){
   rows = [...rows].reverse().slice(0,200);
   $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.loteria||""}</td><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
     || `<tr><td colspan="5" class="empty">Nenhum concurso encontrado</td></tr>`;
-}
-
-function renderSimulador(){
-  const selAno = $("#simAno");
-  if(!selAno || !state.d || !state.d.ano) return;
-  const anos = state.d.ano.map(a => a.ano).sort((a,b)=>b-a);
-  selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
-  calcSimulacao();
-}
-
-function calcSimulacao(){
-  const anoVal = parseInt($("#simAno")?.value);
-  const valVal = parseFloat($("#simVal")?.value || 0);
-  if(!anoVal || !valVal || !state.d) return;
-  
-  const regAno = state.d.ano.find(a => a.ano === anoVal);
-  if(!regAno || !regAno.bruto_nominal) return;
-  
-  const fator = regAno.bruto_corrigido / regAno.bruto_nominal;
-  const valCorrigido = valVal * fator;
-  
-  $("#simRes").innerHTML = `O prêmio de <strong>${brl(valVal)}</strong> em ${anoVal} equivale a aproximadamente <br><span style="font-size:22px">${brl(valCorrigido)}</span> a valores presentes (corrigido pela Selic).`;
 }
 
 function esqueleto(){
@@ -324,28 +305,11 @@ function esqueleto(){
     <div class="kpis" id="kpis"></div>
     
     <div class="grid">
-      <div class="grid-2col">
-        <div class="card">
-          <h2>Distribuição Estimada da Arrecadação</h2>
-          <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
-          <div class="legend" id="l-donut"></div>
-          <p class="note">Estimativa com percentuais fixos sobre o prêmio bruto; não usa a arrecadação real de cada concurso e varia entre loterias.</p>
-        </div>
-        <div class="card">
-          <h2>Simulador de Correção de Prêmios</h2>
-          <p class="sub">Descubra quanto um prêmio recebido no passado valeria hoje:</p>
-          <div class="sim-box">
-            <div>
-              <label class="sub">Ano do Sorteio:</label><br>
-              <select id="simAno" style="margin-top:4px;"></select>
-            </div>
-            <div>
-              <label class="sub">Valor Recebido (R$):</label><br>
-              <input type="number" id="simVal" value="1000000" step="50000" style="margin-top:4px;width:140px;">
-            </div>
-          </div>
-          <div class="sim-res" id="simRes"></div>
-        </div>
+      <div class="card">
+        <h2>Distribuição Estimada da Arrecadação</h2>
+        <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
+        <div class="legend" id="l-donut" style="justify-content:center"></div>
+        <p class="note">Estimativa ilustrativa: parte do prêmio bruto e aplica percentuais fixos (prêmios 43,35%, repasses 48%, custos 20% da arrecadação), que somam mais de 100%. Não usa a arrecadação real de cada concurso e varia entre loterias.</p>
       </div>
 
       <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
@@ -364,8 +328,6 @@ function esqueleto(){
   }
   
   $("#busca")?.addEventListener("input", renderConcursos);
-  $("#simAno")?.addEventListener("change", calcSimulacao);
-  $("#simVal")?.addEventListener("input", calcSimulacao);
 }
 
 // Carrega e consolida dados de múltiplas loterias simultaneamente

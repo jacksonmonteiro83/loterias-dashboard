@@ -101,10 +101,9 @@ def main(destino=None):
     assert abs(q1.bruto_nominal - 20000.0) < 1e-6 and abs(q1.ir_nominal - 6000.0) < 1e-6
 
     # pendencias de regra de IR por loteria
-    assert meta_m["regras_ir_pendentes"] == [{"de": "2025-05-01", "ate": None}]
-    assert meta_q["regras_ir_pendentes"] == [{"de": "1994-03-13", "ate": "1996-03-10"},
-                                             {"de": "2025-05-01", "ate": None}]
-    assert meta_m["regras_ir_conferidas"] is False
+    assert meta_m["regras_ir_pendentes"] == [] and meta_m["regras_ir_conferidas"] is True
+    assert meta_q["regras_ir_pendentes"] == [{"de": "1994-03-13", "ate": "1996-03-10"}]
+    assert meta_q["regras_ir_conferidas"] is False
     assert meta_m["concursos"] == 3 and meta_q["concursos"] == 4
     indice = json.loads((d / "loterias.json").read_text())
     assert [x["slug"] for x in indice] == ["megasena", "quina"]

@@ -55,9 +55,9 @@ python tests/test_pipeline.py            # teste sem rede, dados sintéticos
 O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver linha com
 `conferido` diferente de `sim` em `regras_ir.csv`:
 
-- **A partir de 05/2025:** fontes divergem sobre o limite (R$ 2.428,80 desde 05/2025?) e a Lei 15.270/2025
-  (isenção efetiva até R$ 5.000 em 2026) pode ter mudado o limite do art. 56. Confirmar na Receita/Caixa.
-- **Antes de 03/1996 (Quina):** regime não verificado.
+- **Quina de 03/1994 a 03/1996:** regime de IR anterior a 1996 não verificado (assumido o do RIR/1999).
+- **Limite de 2025 e 2026 (R$ 2.428,80):** conferido em fontes secundárias (MP 1.294/2025; a Lei 15.270/2025 não
+  altera a primeira faixa, o redutor até R$ 5.000 é separado). O texto da lei não foi lido diretamente.
 - **Dupla Sena:** os concursos recentes trazem 8 faixas (os dois sorteios), mas alguns períodos antigos
   trazem 4 ou 6; conferir se o histórico antigo está completo.
 - **Super Sete (desligada):** o servidor da Caixa está quebrado para essa loteria. `/supersete` responde
@@ -65,4 +65,5 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
   do GitHub Actions e no navegador). Os espelhos públicos achados só trazem as dezenas, sem prêmios por faixa.
   Quando a Caixa consertar, troque para `"ativa": True` em `LOTERIAS` e rode o workflow.
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
-- O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos, não a arrecadação real.
+- O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos que somam mais de 100% e não a arrecadação
+  real (que falta em vários concursos e, nos acumulados, fica abaixo do prêmio pago): é só ilustrativo.

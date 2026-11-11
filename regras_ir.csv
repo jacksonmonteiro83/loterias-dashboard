@@ -11,5 +11,5 @@ vigencia_inicio,limite_isencao,aliquota,base,conferido,fonte
 2015-04-01,1903.98,0.30,excedente,sim,"tabela mensal IRPF a partir de 04/2015"
 2023-05-01,2112.00,0.30,excedente,sim,"tabela mensal IRPF a partir de 05/2023"
 2024-02-01,2259.20,0.30,excedente,sim,"tabela mensal IRPF; fontes divergem se inicia em 02/2024 ou 03/2024 (impacto minimo)"
-2025-05-01,2428.80,0.30,excedente,nao,"yahii.com.br indica 2.428,80 desde 05/2025; mobills.com.br indica 2.259,20 ate 12/2025. Confirmar"
-2026-01-01,2428.80,0.30,excedente,nao,"Lei 15.270/2025 (isencao efetiva ate R$ 5.000 via redutor): nao verificado se o limite do art. 56 passou a ser 2.428,80 ou 5.000"
+2025-05-01,2428.80,0.30,excedente,sim,"MP 1.294/2025 (efeitos a partir de 05/2025): primeira faixa da tabela mensal = R$ 2.428,80; fontes: contabeis.com.br e PwC. Caixa usa o mesmo valor (teto do Pix, nov/2026). A tabela do mobills indicando 2.259,20 ate 12/2025 diverge das demais"
+2026-01-01,2428.80,0.30,excedente,sim,"Lei 15.270/2025 nao muda a primeira faixa da tabela (2.428,80); a isencao ate R$ 5.000 e um redutor separado aplicado depois (bemcalculado.com.br); Caixa paga via Pix ate R$ 2.428,80 em nov/2026. Texto da lei nao lido diretamente"
