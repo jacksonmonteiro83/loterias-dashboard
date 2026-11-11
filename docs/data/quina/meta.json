@@ -1,7 +1,7 @@
 {
   "loteria": "quina",
   "nome": "Quina",
-  "atualizado_em": "2026-11-10T21:07:55-03:00",
+  "atualizado_em": "2026-11-10T21:12:13-03:00",
   "data_corrente": "2026-11-10",
   "concursos": 7163,
   "ultimo_concurso": 7163,
@@ -19,9 +19,9 @@
     }
   ],
   "totais": {
-    "bruto_nominal": 41903487103.88,
-    "bruto_corrigido": 5674165310945.2,
-    "ir_nominal": 10774453024.24,
-    "ir_corrigido": 1697825418818.56
+    "bruto_nominal": 17417975799.1,
+    "bruto_corrigido": 82728717171.63,
+    "ir_nominal": 3428753255.81,
+    "ir_corrigido": 20376098464.04
   }
 }
