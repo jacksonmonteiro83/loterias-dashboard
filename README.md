@@ -60,8 +60,9 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
 - **Antes de 03/1996 (Quina):** regime não verificado.
 - **Dupla Sena:** os concursos recentes trazem 8 faixas (os dois sorteios), mas alguns períodos antigos
   trazem 4 ou 6; conferir se o histórico antigo está completo.
-- **Super Sete (desligada):** a API da Caixa responde HTTP 500 em `/supersete` e em `/supersete/1` quando
-  chamada pelo GitHub Actions. Teste a URL `https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete`
-  no navegador; se abrir, religue com `"ativa": True` em `LOTERIAS` (pode ser bloqueio do IP do Actions).
+- **Super Sete (desligada):** o servidor da Caixa está quebrado para essa loteria. `/supersete` responde
+  HTTP 500 com "404 Not Found" vindo do SharePoint interno da Caixa, para qualquer cliente (testado de dentro
+  do GitHub Actions e no navegador). Os espelhos públicos achados só trazem as dezenas, sem prêmios por faixa.
+  Quando a Caixa consertar, troque para `"ativa": True` em `LOTERIAS` e rode o workflow.
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
 - O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos, não a arrecadação real.

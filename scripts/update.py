@@ -39,9 +39,9 @@ LOTERIAS = {
     "duplasena":      {"nome": "Dupla Sena",    "primeiro_concurso": date(2001, 11, 6)},
     "timemania":      {"nome": "Timemania",     "primeiro_concurso": date(2008, 3, 1)},
     "diadesorte":     {"nome": "Dia de Sorte",  "primeiro_concurso": date(2018, 5, 19)},
-    # Desligada: a API da Caixa responde HTTP 500 em /supersete e em /supersete/1 quando chamada
-    # pelo GitHub Actions. Para religar, troque por True depois de testar a URL
-    # https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete no navegador.
+    # Desligada: o backend da Caixa para /supersete esta quebrado (HTTP 500, "404 Not Found" do
+    # SharePoint interno), para qualquer cliente. Religar com True quando a URL
+    # https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete voltar a responder JSON.
     "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2),
                        "ativa": False},
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
