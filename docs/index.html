@@ -9,20 +9,27 @@
   --bg:#f6f5f1; --card:#ffffff; --ink:#1c1b19; --muted:#6b675f; --line:#e3e0d8;
   --accent:#1f6f4a; --accent-2:#b4540a; --warn-bg:#fff4d6; --warn-ink:#6b4a00;
   --c1:#1f6f4a; --c2:#c9822b; --c3:#3a6ea5; --c4:#8a4f9e; --c5:#b0453a; --c6:#5c6b73;
+  --l-megasena:#1f8a4c; --l-lotofacil:#8a4f9e; --l-quina:#3a6ea5; --l-lotomania:#c9822b; --l-duplasena:#b0453a;
+  --l-timemania:#a08c00; --l-diadesorte:#8b5e3c; --l-supersete:#5c6b73; --l-maismilionaria:#17858f;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#14130f; --card:#1d1c17; --ink:#ece9e0; --muted:#a29d90; --line:#34312a;
     --accent:#4fb283; --accent-2:#e39a4e; --warn-bg:#3a2f10; --warn-ink:#f1d78a;
     --c1:#4fb283; --c2:#e0a04a; --c3:#6fa3da; --c4:#b88ad0; --c5:#e17a6d; --c6:#93a3ab;
+    --l-megasena:#4fb283; --l-lotofacil:#b88ad0; --l-quina:#6fa3da; --l-lotomania:#e0a04a; --l-duplasena:#e17a6d;
+    --l-timemania:#d9c441; --l-diadesorte:#c49a77; --l-supersete:#93a3ab; --l-maismilionaria:#4bc0c8;
   }
 }
 :root[data-theme="dark"]{
   --bg:#14130f; --card:#1d1c17; --ink:#ece9e0; --muted:#a29d90; --line:#34312a;
   --accent:#4fb283; --accent-2:#e39a4e; --warn-bg:#3a2f10; --warn-ink:#f1d78a;
   --c1:#4fb283; --c2:#e0a04a; --c3:#6fa3da; --c4:#b88ad0; --c5:#e17a6d; --c6:#93a3ab;
+  --l-megasena:#4fb283; --l-lotofacil:#b88ad0; --l-quina:#6fa3da; --l-lotomania:#e0a04a; --l-duplasena:#e17a6d;
+  --l-timemania:#d9c441; --l-diadesorte:#c49a77; --l-supersete:#93a3ab; --l-maismilionaria:#4bc0c8;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 .wrap{max-width:1150px;margin:0 auto;padding:24px 16px 64px}
 header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:16px}
@@ -32,45 +39,64 @@ h2{font-size:16px;margin:0 0 12px}
 .banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
 
-/* Painel de Filtros Avançados */
 .filter-panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
-.filter-title{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--ink)}
-.checkbox-group{display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:14px}
+.filter-title{font-size:14px;font-weight:600;margin-bottom:10px}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:10px 16px;margin-bottom:12px}
 .checkbox-item{display:inline-flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;user-select:none}
 .checkbox-item input[type="checkbox"]{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
-.year-filter{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding-top:10px;border-top:1px dashed var(--line)}
+.checkbox-item .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.year-filter{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;padding-top:12px;border-top:1px dashed var(--line)}
 
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
 .seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .controls{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0 16px;align-items:center}
+.resumo{margin-bottom:12px;font-size:15px;line-height:1.6;border-left:4px solid var(--accent)}
+.resumo b{font-variant-numeric:tabular-nums}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
 .kpi .v{font-size:22px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--accent)}
 .kpi .v-sub{font-size:13px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
 .kpi .l{color:var(--muted);font-size:13px;font-weight:600}
 .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-@media (min-width: 768px){
-  .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-}
+.cardhead{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cardhead h2{margin:0}
 svg{width:100%;height:auto;display:block}
 svg text{fill:var(--muted);font-size:11px;font-family:inherit}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend .hot{cursor:help;border-bottom:1px dotted var(--muted)}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
 th{color:var(--muted);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}
 .scroll{overflow:auto;max-height:420px}
 input[type=search], input[type=number], select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
-input[type=number]{width:90px}
-input[type=search]{min-width:200px}
+input[type=number]{width:110px}
+input[type=search]{min-width:200px;max-width:100%}
 a{color:var(--accent)}
 .empty{padding:40px 16px;text-align:center;color:var(--muted)}
-.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:5px 9px;border-radius:6px;font-size:12px;display:none;z-index:10;white-space:nowrap}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:12px;line-height:1.45;display:none;z-index:10;white-space:pre-line;max-width:min(340px,calc(100vw - 16px))}
 .note{color:var(--muted);font-size:12px;margin-top:10px}
 .donut-pct{fill:#fff;font-size:12px;font-weight:700;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:2.5px;stroke-linejoin:round}
 .donut-total{fill:var(--ink);font-size:17px;font-weight:700}
 .donut-sub{fill:var(--muted);font-size:11px}
+.slice{cursor:help}
+.mk{cursor:help}
+.badge{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;
+  color:var(--lc);background:color-mix(in srgb,var(--lc) 16%,transparent);border:1px solid color-mix(in srgb,var(--lc) 40%,transparent)}
+.sim-in{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:14px}
+.sim-in label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.sim-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.sim-out .cell{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.sim-out .l{font-size:12px;color:var(--muted);font-weight:600}
+.sim-out .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--accent);overflow-wrap:anywhere}
+.sim-out .d{font-size:12px;color:var(--muted);margin-top:2px}
+@media (max-width:520px){ input[type=number]{width:100%} .sim-in label{flex:1 1 130px} }
 </style>
 </head>
 <body>
@@ -79,25 +105,30 @@ a{color:var(--accent)}
     <h1>Histórico das Loterias CAIXA</h1>
     <div class="sub" id="atualizado"></div>
   </header>
-  
-  <!-- Painel de Seleção de Loterias e Período -->
+
   <div class="filter-panel">
     <div class="filter-title">Selecione as Loterias para Analisar:</div>
-    <div class="checkbox-group" id="lotteryCheckboxes">
-      <label class="checkbox-item">
-        <input type="checkbox" id="chkAll" checked> <strong>TODAS AS LOTERIAS</strong>
-      </label>
+    <div class="btnrow" id="atalhosLot">
+      <button class="btn" id="btnTodas" type="button">TODAS AS LOTERIAS</button>
+      <button class="btn" id="btnPrincipais" type="button">Apenas Principais</button>
+      <button class="btn" id="btnLimpar" type="button">Limpar Seleção</button>
     </div>
-    
+    <div class="checkbox-group" id="lotteryCheckboxes"></div>
+
     <div class="year-filter">
-      <span style="font-weight:600;font-size:13px;">Filtrar Período (Ano):</span>
+      <span style="font-weight:600;font-size:13px;">Período (Ano):</span>
       <label class="sub">De: <input type="number" id="anoDe" placeholder="Ex: 1994" min="1994" max="2100"></label>
       <label class="sub">Até: <input type="number" id="anoAte" placeholder="Ex: 2026" min="1994" max="2100"></label>
-      <span class="sub">(Deixe em branco para todo o histórico)</span>
+      <span class="btnrow" id="presets" style="margin:0">
+        <button class="btn" type="button" data-p="5">Últimos 5 Anos</button>
+        <button class="btn" type="button" data-p="10">Últimos 10 Anos</button>
+        <button class="btn" type="button" data-p="todo">Todo o Histórico</button>
+      </span>
     </div>
   </div>
 
   <div id="banner"></div>
+  <div class="card empty" id="vazio" hidden>Nenhuma loteria selecionada. Marque ao menos uma acima, ou use “Apenas Principais” / “TODAS AS LOTERIAS”.</div>
   <div id="app"></div>
   <div class="note" id="notas"></div>
 </div>
@@ -107,6 +138,7 @@ a{color:var(--accent)}
 "use strict";
 const $ = s => document.querySelector(s);
 const brl = n => n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num = (n,d=2) => n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const compact = n => {
   const a = Math.abs(n);
   if (a >= 1e9) return "R$ " + (n/1e9).toLocaleString("pt-BR",{maximumFractionDigits:1}) + " bi";
@@ -115,88 +147,163 @@ const compact = n => {
   return "R$ " + Math.round(n);
 };
 const fmtData = iso => iso ? iso.split("-").reverse().join("/") : "";
+const pctStr = v => v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + "%";
 
-const state = { 
-  loteriasLista: [],
-  selectedSlugs: [],
-  base: "corrigido", 
-  per: "ano", 
-  era: "todas", 
-  d: null,
-  anoDe: null,
-  anoAte: null
+// ---------- Constantes ----------
+const PRINCIPAIS = ["megasena","lotofacil","quina"];
+const corLot = slug => `var(--l-${slug}, var(--c6))`;
+
+// Salário mínimo nacional: vigência (AAAA-MM) → valor. Fonte: contabeis.com.br/tabelas/salario-minimo
+// (conferir com os decretos/leis de cada ano; o valor de 2026 não foi conferido no decreto).
+const SM = [["1994-07",64.79],["1994-09",70],["1995-05",100],["1996-05",112],["1997-05",120],["1998-05",130],
+  ["1999-05",136],["2000-04",151],["2001-04",180],["2002-04",200],["2003-04",240],["2004-05",260],["2005-05",300],
+  ["2006-04",350],["2007-04",380],["2008-03",415],["2009-02",465],["2010-01",510],["2011-01",540],["2011-03",545],
+  ["2012-01",622],["2013-01",678],["2014-01",724],["2015-01",788],["2016-01",880],["2017-01",937],["2018-01",954],
+  ["2019-01",998],["2020-01",1039],["2020-02",1045],["2021-01",1100],["2022-01",1212],["2023-01",1302],
+  ["2023-05",1320],["2024-01",1412],["2025-01",1518],["2026-01",1621]];
+const smEm = ym => { let v = null; for(const [k,x] of SM){ if(k <= ym) v = x; else break; } return v; };
+const SM_HOJE = SM[SM.length-1];
+
+// Destinação legal (Lei 13.756/2018, art. 16, II — loteria de prognósticos numéricos, desde 01/01/2019).
+const LEI = { premiosEIR:43.79, repasses:37.08, custeio:19.13 };
+const TIP_DONUT = {
+  liquidos: "Prêmios líquidos\nParte do prêmio bruto que fica com os ganhadores, já descontado o IRRF. Na Lei 13.756/2018 (art. 16, II), “prêmios e imposto de renda” juntos somam 43,79% da arrecadação.",
+  repasses: "Repasses Sociais — 37,08% da arrecadação (Lei 13.756/2018, art. 16, II):\n• Seguridade Social: 17,32%\n• Segurança Pública (FNSP): 6,80%\n• Esporte: 4,36% (Min. do Esporte 3,53%; CBC 0,46%; CBDE 0,22%; CBDU 0,11%; CBCP 0,04%)\n• Sistema Penitenciário (Funpen): 3,00%\n• Cultura (FNC): 2,91%\n• Comitê Olímpico (COB): 1,73%\n• Comitê Paralímpico (CPB): 0,96%\nO FIES não aparece nessa divisão. Percentuais de 2019 em diante, aplicados a todo o período como estimativa.",
+  ir: "IRRF — Imposto de Renda retido na fonte e recolhido à União\n30% por ganhador, tributação exclusiva. Desde 2008, só sobre o que excede a 1ª faixa da tabela mensal do IRPF (Lei 11.941/2009, art. 56); até 2007, sobre o prêmio inteiro acima de R$ 11,10 (RIR/1999, art. 676). Na lei de 2018 ele está dentro dos 43,79% de “prêmios e IR”.",
+  custeio: "Custeio e manutenção do agente operador (Caixa) — 19,13% da arrecadação (Lei 13.756/2018, art. 16, II)."
+};
+
+// Concursos especiais: detectados por regra de data + pico (valor ≥ 2× a mediana dos concursos da loteria no ano).
+const ESPECIAIS = {
+  megasena:  { sym:"V", nome:"Mega da Virada",          ok:(d)=>d.m===12 && d.d>=28 },
+  quina:     { sym:"J", nome:"Quina de São João",       ok:(d)=>d.m===6  && d.d>=20 },
+  lotofacil: { sym:"I", nome:"Lotofácil da Independência", ok:(d)=>d.m===9 && d.d<=15 },
+  duplasena: { sym:"P", nome:"Dupla Sena de Páscoa",    ok:(d)=>{ const p = pascoa(d.y); const t = Date.UTC(d.y,d.m-1,d.d);
+                  const t0 = Date.UTC(p.y,p.m-1,p.d); return t >= t0-3*864e5 && t <= t0+864e5; } }
+};
+function pascoa(y){ // algoritmo de Meeus/Jones/Butcher
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return {y,m:mes,d:dia};
+}
+
+const state = {
+  loteriasLista: [], selectedSlugs: [], base: "corrigido", per: "ano", era: "todas", modo: "stack",
+  d: null, anoDe: null, anoAte: null,
+  cache: {},            // state.cache[slug] = Promise com os dados da loteria (evita fetch repetido)
+  basePath: null, tok: 0,
+  sim: { valor: 1000000, ano: 2010, mes: 1 }
 };
 
 async function getJSON(p){ const r = await fetch(p); if(!r.ok) throw new Error(p); return r.json(); }
 
+// ---------- Tooltip ----------
 const tip = $("#tip");
-function bindTip(el, text){
-  el.addEventListener("mousemove", e => { tip.textContent = text; tip.style.display="block";
-    tip.style.left = (e.clientX+12)+"px"; tip.style.top = (e.clientY+12)+"px"; });
-  el.addEventListener("mouseleave", () => tip.style.display="none");
+function mostraTip(text, x, y){
+  tip.textContent = text; tip.style.display = "block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - w - 8)) + "px";
+  tip.style.top = (y + 12 + h > innerHeight ? Math.max(8, y - h - 12) : y + 12) + "px";
 }
+function bindTip(el, text){
+  el.addEventListener("mousemove", e => mostraTip(text, e.clientX, e.clientY));
+  el.addEventListener("mouseleave", () => tip.style.display = "none");
+  el.addEventListener("click", e => { e.stopPropagation(); mostraTip(text, e.clientX, e.clientY); });   // toque no celular
+}
+document.addEventListener("click", () => tip.style.display = "none");
 function niceMax(v){ const p = Math.pow(10, Math.floor(Math.log10(v||1))); const m = v/p;
   return (m<=1?1:m<=2?2:m<=5?5:10)*p; }
 
-function barChart(el, rows, series){
-  const W=960,H=300,L=64,R=8,T=10,B=28, iw=W-L-R, ih=H-T-B;
-  const totais = rows.map(r => r.valores.reduce((a,b)=>a+b,0));
-  const max = niceMax(Math.max(...totais, 1));
+// ---------- Gráficos ----------
+// rows: [{label, valores:[...]}] ; series: [{nome, cor}] ; opt: {modo:"stack"|"group", marcas:{label:[{sym,cor,tip}]}}
+function barChart(el, rows, series, opt = {}){
+  const modo = opt.modo === "group" ? "group" : "stack", marcas = opt.marcas || {};
+  const maxMarks = Math.max(0, ...rows.map(r => (marcas[r.label] || []).length));
+  const W=960,H=300,L=64,R=8,T=12+maxMarks*16,B=28, iw=W-L-R, ih=H-T-B;
+  const soma = r => r.valores.reduce((a,b)=>a+b,0);
+  const topo = r => modo==="group" ? Math.max(0, ...r.valores) : soma(r);
+  const max = niceMax(Math.max(...rows.map(topo), 1));
   const y = v => T + ih - v/max*ih;
-  const bw = iw/(rows.length||1), gap = Math.min(4, bw*.2);
+  const bw = iw/(rows.length||1), gap = Math.min(4, bw*.2), n = series.length;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   for(let i=0;i<=4;i++){ const v=max/4*i, yy=y(v);
     s += `<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/>`;
     s += `<text x="${L-6}" y="${yy+4}" text-anchor="end">${compact(v)}</text>`; }
-  const passo = Math.ceil(rows.length/ Math.floor(iw/46));
+  const passo = Math.max(1, Math.ceil(rows.length / Math.max(1, Math.floor(iw/46))));
   rows.forEach((r,i)=>{
-    let acc=0; const x = L+i*bw+gap/2, w = Math.max(1,bw-gap);
-    r.valores.forEach((v,k)=>{ if(v<=0) return;
-      const y0=y(acc+v), h=y(acc)-y0; acc+=v;
-      s += `<rect data-i="${i}" data-k="${k}" x="${x}" y="${y0}" width="${w}" height="${Math.max(h,0)}" fill="${series[k].cor}" rx="1.5"/>`; });
+    const x = L+i*bw+gap/2, w = Math.max(1,bw-gap);
+    if(modo === "stack"){
+      let acc=0;
+      r.valores.forEach((v,k)=>{ if(v<=0) return;
+        const y0=y(acc+v), h=y(acc)-y0; acc+=v;
+        s += `<rect data-i="${i}" data-k="${k}" x="${x}" y="${y0}" width="${w}" height="${Math.max(h,0)}" fill="${series[k].cor}" rx="1.5"/>`; });
+    } else {
+      const sw = w/n;
+      r.valores.forEach((v,k)=>{ if(v<=0) return;
+        const y0=y(v);
+        s += `<rect data-i="${i}" data-k="${k}" x="${x+k*sw}" y="${y0}" width="${Math.max(.8,sw-.4)}" height="${Math.max(y(0)-y0,0)}" fill="${series[k].cor}" rx="1"/>`; });
+    }
     if(i%passo===0) s += `<text x="${x+w/2}" y="${H-8}" text-anchor="middle">${r.label}</text>`;
+    (marcas[r.label] || []).forEach((m,j)=>{
+      const cx = x+w/2, cy = Math.max(9, y(topo(r)) - 10 - j*16);
+      s += `<g class="mk" data-i="${i}" data-j="${j}"><circle cx="${cx}" cy="${cy}" r="7.5" fill="var(--card)" stroke="${m.cor}" stroke-width="1.8"/>
+        <text x="${cx}" y="${cy+3.4}" text-anchor="middle" style="fill:${m.cor};font-size:9px;font-weight:700">${m.sym}</text></g>`;
+    });
   });
   s += `</svg>`;
   el.innerHTML = s;
   el.querySelectorAll("rect").forEach(rc => {
     const r = rows[+rc.dataset.i], k = +rc.dataset.k;
-    bindTip(rc, `${r.label} · ${series[k].nome}: ${brl(r.valores[k])}` + (series.length>1 ? ` (total ${brl(r.valores.reduce((a,b)=>a+b,0))})`:""));
+    bindTip(rc, `${r.label} · ${series[k].nome}: ${brl(r.valores[k])}` + (n>1 ? `\nTotal do período: ${brl(soma(r))}` : ""));
   });
+  el.querySelectorAll(".mk").forEach(g => bindTip(g, marcas[rows[+g.dataset.i].label][+g.dataset.j].tip));
 }
 
-const pctStr = v => v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + "%";
-
-// Rosca com o percentual de cada fatia escrito dentro dela (fatias < 3,5% ficam só na legenda).
+// Rosca com o percentual dentro de cada fatia (fatias < 3,5% ficam só na legenda) e tooltip por fatia.
 function donutChart(el, items){
   const size=280, cx=140, cy=140, r=100, stroke=52;
   const total = items.reduce((a,b)=>a+b.val,0);
   let ang = -Math.PI / 2, fatias = "", rotulos = "";
-  items.forEach(it => {
+  items.forEach((it,i) => {
     const sl = (total > 0 ? it.val / total : 0) * 2 * Math.PI;
     if(sl <= 0) return;
     const a1 = ang, a2 = ang + sl; ang = a2;
     if(sl >= 2*Math.PI - 1e-6){
-      fatias += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
+      fatias += `<circle class="slice" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
     } else {
       const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1), x2 = cx + r*Math.cos(a2), y2 = cy + r*Math.sin(a2);
-      fatias += `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${sl > Math.PI ? 1 : 0} 1 ${x2} ${y2}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
+      fatias += `<path class="slice" data-i="${i}" d="M ${x1} ${y1} A ${r} ${r} 0 ${sl > Math.PI ? 1 : 0} 1 ${x2} ${y2}" fill="none" stroke="${it.cor}" stroke-width="${stroke}"/>`;
     }
     const pct = it.val / total * 100;
     if(pct >= 3.5){
       const m = (a1 + a2) / 2;
-      rotulos += `<text class="donut-pct" x="${cx + r*Math.cos(m)}" y="${cy + r*Math.sin(m)}" text-anchor="middle" dominant-baseline="central">${pctStr(pct)}</text>`;
+      rotulos += `<text class="donut-pct" x="${cx + r*Math.cos(m)}" y="${cy + r*Math.sin(m)}" text-anchor="middle" dominant-baseline="central" pointer-events="none">${pctStr(pct)}</text>`;
     }
   });
   el.innerHTML = `<svg viewBox="0 0 ${size} ${size}" role="img" style="max-width:300px">${fatias}${rotulos}
     <text class="donut-total" x="${cx}" y="${cy-6}" text-anchor="middle">${compact(total)}</text>
     <text class="donut-sub" x="${cx}" y="${cy+13}" text-anchor="middle">Total estimado</text></svg>`;
+  el.querySelectorAll(".slice").forEach(p => {
+    const it = items[+p.dataset.i];
+    bindTip(p, `${it.nome} — ${compact(it.val)} (${pctStr(total ? it.val/total*100 : 0)})\n${it.tip || ""}`);
+  });
 }
 
-function legend(el, series){
-  el.innerHTML = series.length>1 ? series.map(s=>`<span><i style="background:${s.cor}"></i>${s.nome}</span>`).join("") : "";
+// itens: [{nome, cor, tip?}]
+function legend(el, itens){
+  el.innerHTML = "";
+  if(itens.length < 1) return;
+  itens.forEach(s => {
+    const sp = document.createElement("span");
+    sp.innerHTML = `<i style="background:${s.cor}"></i>${s.nome}`;
+    if(s.tip){ sp.classList.add("hot"); bindTip(sp, s.tip); }
+    el.appendChild(sp);
+  });
 }
 
-function sufixo(){ return state.base==="corrigido" ? "_corrigido" : "_nominal"; }
+// ---------- Filtros / agregação ----------
+const sufixo = () => state.base==="corrigido" ? "_corrigido" : "_nominal";
 
 function filtrarPorAnoEERA(lista){
   if(!Array.isArray(lista)) return [];
@@ -210,258 +317,349 @@ function filtrarPorAnoEERA(lista){
     return true;
   });
 }
+const anoFinal = () => state.d?.ano?.length ? state.d.ano[state.d.ano.length-1].ano : new Date().getFullYear();
+
+// Concursos especiais por loteria (calculado uma vez e guardado no cache da loteria)
+function especiaisDe(d){
+  if(d.especiais) return d.especiais;
+  const regra = ESPECIAIS[d.slug]; d.especiais = [];
+  if(!regra) return d.especiais;
+  const porAno = {}, cand = {};
+  for(const c of d.concursos){
+    const [y,m,dd] = c.data.split("-").map(Number), ano = y;
+    (porAno[ano] ||= []).push(c);
+    if(regra.ok({y,m,d:dd})){ const k = ano; if(!cand[k] || c.bruto_nominal > cand[k].bruto_nominal) cand[k] = c; }
+  }
+  const mediana = (arr, f) => { const v = arr.map(f).sort((a,b)=>a-b); return v.length ? v[Math.floor(v.length/2)] : 0; };
+  for(const [ano,c] of Object.entries(cand)){
+    const med = { _corrigido: mediana(porAno[ano], r=>r.bruto_corrigido), _nominal: mediana(porAno[ano], r=>r.bruto_nominal) };
+    d.especiais.push({ slug:d.slug, sym:regra.sym, nome:regra.nome, ano:+ano, data:c.data, concurso:c.concurso,
+      v:{ _corrigido:c.bruto_corrigido, _nominal:c.bruto_nominal }, med });
+  }
+  return d.especiais;
+}
+
+function montarMarcas(suf, chave){
+  const marcas = {};
+  for(const d of state.dados){
+    for(const e of especiaisDe(d)){
+      if(e.v[suf] < 2*e.med[suf] || e.v[suf] <= 0) continue;           // critério de pico
+      const label = chave === "ano" ? String(e.ano) : e.data.slice(0,7);
+      (marcas[label] ||= []).push({ sym:e.sym, cor:corLot(d.slug),
+        tip:`${e.nome} ${e.ano}\nConcurso ${e.concurso} · ${fmtData(e.data)}\nBruto pago: ${brl(e.v[suf])} (${state.base})` });
+    }
+  }
+  return marcas;
+}
+
+// ---------- Render ----------
+function badge(slug, nome){ return `<span class="badge" style="--lc:${corLot(slug)}">${nome}</span>`; }
 
 function render(){
   if(!state.d) return;
-  const d = state.d, suf = sufixo();
-  const resumoBruto = state.per==="ano" ? d.ano : d.mes;
-  const resumo = filtrarPorAnoEERA(resumoBruto);
-  const chave = state.per==="ano" ? "ano" : "mes";
-  
-  const brutoSum = resumo.reduce((a,b)=>a+(b["bruto"+suf]||0),0);
-  const irSum = resumo.reduce((a,b)=>a+(b["ir"+suf]||0),0);
-  const brutoNominal = resumo.reduce((a,b)=>a+(b["bruto_nominal"]||0),0);
-  const irNominal = resumo.reduce((a,b)=>a+(b["ir_nominal"]||0),0);
+  const d = state.d, suf = sufixo(), chave = state.per==="ano" ? "ano" : "mes";
+  const resumo = filtrarPorAnoEERA(state.per==="ano" ? d.ano : d.mes);
 
+  const soma = (k) => resumo.reduce((a,b)=>a+(b[k]||0),0);
+  const brutoSum = soma("bruto"+suf), irSum = soma("ir"+suf), brutoNominal = soma("bruto_nominal"), irNominal = soma("ir_nominal");
+  const concursosN = soma("concursos");
   const rotulo = state.base==="corrigido" ? "corrigido pela Selic" : "nominal";
-  
+
+  // Card de resumo em linguagem natural
+  const anos = resumo.map(r => parseInt(r[chave]));
+  const a0 = anos.length ? Math.min(...anos) : null, a1 = anos.length ? Math.max(...anos) : null;
+  const nomes = state.dados.map(x => x.meta.nome), nl = nomes.length;
+  const lista = nl === 1 ? `a loteria ${nomes[0]}` : nl <= 3 ? `as ${nl} loterias selecionadas (${nomes.slice(0,-1).join(", ")} e ${nomes[nl-1]})` : `as ${nl} loterias selecionadas`;
+  $("#resumo").innerHTML = anos.length
+    ? `No período selecionado (${a0===a1 ? a0 : a0+"–"+a1}), ${lista} ${nl===1?"distribuiu":"distribuíram"} <b>${compact(brutoSum)}</b> em prêmios brutos (${rotulo}) em ${concursosN.toLocaleString("pt-BR")} concursos e ${nl===1?"gerou":"geraram"} <b>${compact(irSum)}</b> em IRRF para a União.`
+    : `Nenhum concurso no período e nas loterias selecionados.`;
+
   $("#kpis").innerHTML = [
     ["Prêmios Brutos Pagos", compact(brutoSum), "Valor Nominal: " + compact(brutoNominal), "Total pago nas faixas"],
     ["IRRF Arrecadado (União)", compact(irSum), "Valor Nominal: " + compact(irNominal), "Imposto de Renda retido"],
     ["Alíquota Efetiva de IR", (brutoSum? irSum/brutoSum*100:0).toFixed(1)+"%", "IRRF ÷ Prêmios Brutos", "Percentual sobre o prêmio"],
-    ["Concursos Analisados", resumo.reduce((a,b)=>a+(b.concursos||0),0).toLocaleString("pt-BR"), "Loterias: " + state.selectedSlugs.join(", "), ""],
+    ["Concursos Analisados", concursosN.toLocaleString("pt-BR"), "Loterias: " + nomes.join(", "), ""],
   ].map(([l,v,sub,t])=>`
-    <div class="card kpi">
-      <div class="l" title="${t}">${l}</div>
-      <div class="v">${v}</div>
-      <div class="v-sub">${sub}</div>
-    </div>`).join("");
+    <div class="card kpi"><div class="l" title="${t}">${l}</div><div class="v">${v}</div><div class="v-sub">${sub}</div></div>`).join("");
 
-  $("#t1").textContent = `IR Arrecadado por ${state.per==="ano"?"Ano":"Mês"} (${rotulo})`;
-  barChart($("#c1"), resumo.map(r=>({label:r[chave], valores:[r["ir"+suf]||0]})), [{nome:"IR Arrecadado", cor:"var(--accent-2)"}]);
+  const marcas = montarMarcas(suf, chave);
+  const unid = state.per==="ano" ? "Ano" : "Mês";
 
-  $("#t2").textContent = `Prêmios Brutos Pagos por ${state.per==="ano"?"Ano":"Mês"} (${rotulo})`;
-  barChart($("#c2"), resumo.map(r=>({label:r[chave], valores:[r["bruto"+suf]||0]})), [{nome:"Bruto Pago", cor:"var(--c1)"}]);
-  legend($("#l2"), []);
+  $("#t1").textContent = `IR Arrecadado por ${unid} (${rotulo})`;
+  barChart($("#c1"), resumo.map(r=>({label:String(r[chave]), valores:[r["ir"+suf]||0]})), [{nome:"IR Arrecadado", cor:"var(--accent-2)"}], {marcas});
 
-  const arrecEst = brutoSum / 0.4335;
-  const repassesEst = arrecEst * 0.48;
-  const custosEst = arrecEst * 0.20;
-  
+  // Prêmios: uma série por loteria quando há mais de uma selecionada
+  const multi = state.dados.length > 1;
+  $("#sModo").hidden = !multi;
+  let series, rows;
+  if(multi){
+    series = state.dados.map(x => ({ nome:x.meta.nome, cor:corLot(x.slug) }));
+    const idx = state.dados.map(x => new Map((state.per==="ano" ? x.ano : x.mes).map(r => [String(r[chave]), r])));
+    rows = resumo.map(r => ({ label:String(r[chave]), valores: idx.map(m => (m.get(String(r[chave]))?.["bruto"+suf]) || 0) }));
+    $("#t2").textContent = `Prêmios Brutos Pagos por Modalidade e ${unid} (${rotulo})`;
+  } else {
+    series = [{ nome:"Bruto Pago", cor:"var(--c1)" }];
+    rows = resumo.map(r => ({ label:String(r[chave]), valores:[r["bruto"+suf]||0] }));
+    $("#t2").textContent = `Prêmios Brutos Pagos por ${unid} (${rotulo})`;
+  }
+  barChart($("#c2"), rows, series, { modo: state.modo, marcas });
+  legend($("#l2"), multi ? series : []);
+  const usados = new Set(); Object.values(marcas).forEach(a => a.forEach(m => usados.add(m.sym)));
+  const exp = Object.values(ESPECIAIS).filter(e => usados.has(e.sym) && state.dados.some(x => ESPECIAIS[x.slug] === e)).map(e => `<b>${e.sym}</b> ${e.nome}`);
+  $("#l-marcas").innerHTML = exp.length ? `Marcadores de concursos especiais (pico ≥ 2× a mediana do ano): ${exp.join(" · ")}` : "";
+
+  // Rosca: arrecadação estimada a partir do prêmio bruto e dos percentuais da Lei 13.756/2018 (somam 100%)
+  const arrecEst = brutoSum / (LEI.premiosEIR/100);
   const fatias = [
-    { nome: "Prêmios Líquidos", val: Math.max(0, brutoSum - irSum), cor: "var(--c1)" },
-    { nome: "Repasses Sociais (Governo)", val: repassesEst, cor: "var(--c3)" },
-    { nome: "IRRF (União)", val: irSum, cor: "var(--c2)" },
-    { nome: "Custo Operacional & Lotéricas", val: custosEst, cor: "var(--c5)" }
+    { nome:"Prêmios Líquidos", val:Math.max(0, brutoSum - irSum), cor:"var(--c1)", tip:TIP_DONUT.liquidos },
+    { nome:"Repasses Sociais", val:arrecEst*LEI.repasses/100, cor:"var(--c3)", tip:TIP_DONUT.repasses },
+    { nome:"IRRF (União)", val:irSum, cor:"var(--c2)", tip:TIP_DONUT.ir },
+    { nome:"Custeio do Agente Operador", val:arrecEst*LEI.custeio/100, cor:"var(--c5)", tip:TIP_DONUT.custeio }
   ];
   donutChart($("#c-donut"), fatias);
   const totalFatias = fatias.reduce((a,f)=>a+f.val,0);
-  // legenda com os mesmos percentuais escritos na rosca (calculados dos mesmos valores)
-  legend($("#l-donut"), fatias.map(f => ({ nome: `${f.nome} (${pctStr(totalFatias ? f.val/totalFatias*100 : 0)})`, cor: f.cor })));
+  legend($("#l-donut"), fatias.map(f => ({ nome:`${f.nome} (${pctStr(totalFatias ? f.val/totalFatias*100 : 0)})`, cor:f.cor, tip:f.tip })));
 
-  $("#tp-h").innerHTML = `<tr><th>${state.per==="ano"?"Ano":"Mês"}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
+  $("#tp-h").innerHTML = `<tr><th>${unid}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
   $("#tp-b").innerHTML = [...resumo].reverse().map(r=>{
     const b=r["bruto"+suf]||0, i=r["ir"+suf]||0;
     return `<tr><td>${r[chave]}</td><td>${r.concursos||0}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
-    
-  $("#tl-b").innerHTML = (state.d.porLoteria || []).map(l => {
+
+  $("#tl-b").innerHTML = d.porLoteria.map(l => {
     const rows = filtrarPorAnoEERA(l.ano);
     const b = rows.reduce((a,r)=>a+(r["bruto"+suf]||0),0), i = rows.reduce((a,r)=>a+(r["ir"+suf]||0),0);
-    return {nome:l.nome, c:rows.reduce((a,r)=>a+(r.concursos||0),0), b, i};
+    return {slug:l.slug, nome:l.nome, c:rows.reduce((a,r)=>a+(r.concursos||0),0), b, i};
   }).filter(l => l.c > 0).sort((a,b)=>b.b-a.b).map(l =>
-    `<tr><td>${l.nome}</td><td>${l.c.toLocaleString("pt-BR")}</td><td>${brl(l.b)}</td><td>${brl(l.i)}</td><td>${l.b?(l.i/l.b*100).toFixed(1):"0.0"}%</td></tr>`).join("")
+    `<tr><td>${badge(l.slug,l.nome)}</td><td>${l.c.toLocaleString("pt-BR")}</td><td>${brl(l.b)}</td><td>${brl(l.i)}</td><td>${l.b?(l.i/l.b*100).toFixed(1):"0.0"}%</td></tr>`).join("")
     || `<tr><td colspan="5" class="empty">Sem dados no período</td></tr>`;
 
   renderConcursos();
+  renderSim();
+  marcarPresets();
 }
 
 function renderConcursos(){
-  const suf = sufixo(), q = ($("#busca")?.value||"").trim();
-  let rows = filtrarPorAnoEERA(state.d?.concursos || []);
-  if(q) rows = rows.filter(r => String(r.concurso).includes(q) || fmtData(r.data).includes(q));
-  rows = [...rows].reverse().slice(0,200);
-  $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${r.loteria||""}</td><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
+  if(!state.d) return;
+  const suf = sufixo(), q = ($("#busca")?.value||"").trim().toLowerCase();
+  let rows = filtrarPorAnoEERA(state.d.concursos);
+  if(q) rows = rows.filter(r => String(r.concurso).includes(q) || fmtData(r.data).includes(q) || (r.loteria||"").toLowerCase().includes(q));
+  rows = rows.slice(-200).reverse();
+  $("#tc-b").innerHTML = rows.map(r=>`<tr><td>${badge(r.slug, r.loteria||"")}</td><td>${r.concurso}</td><td>${fmtData(r.data)}</td><td>${brl(r["bruto"+suf]||0)}</td><td>${brl(r["ir"+suf]||0)}</td></tr>`).join("")
     || `<tr><td colspan="5" class="empty">Nenhum concurso encontrado</td></tr>`;
 }
 
+// ---------- Simulador: poder de compra em salários mínimos ----------
+function fatorSelic(ym){
+  // fator médio do mês (corrigido ÷ nominal, ponderado pelos prêmios das loterias selecionadas); sem concurso no mês, usa o ano
+  const tot = (lista, chave, val) => { let n=0, c=0;
+    for(const x of state.dados){ const r = lista(x).find(r => String(r[chave]) === val); if(r){ n += r.bruto_nominal||0; c += r.bruto_corrigido||0; } }
+    return n > 0 ? c/n : null; };
+  const m = tot(x => x.mes, "mes", ym);
+  if(m) return { f:m, de:"do mês" };
+  const a = tot(x => x.ano, "ano", ym.slice(0,4));
+  return a ? { f:a, de:"do ano (não houve concursos no mês)" } : null;
+}
+function renderSim(){
+  const out = $("#sim-out"); if(!out) return;
+  const {valor, ano, mes} = state.sim, ym = `${ano}-${String(mes).padStart(2,"0")}`;
+  const sm0 = smEm(ym), fs = fatorSelic(ym);
+  if(!(valor > 0) || !(ano >= 1994) || sm0 == null){
+    out.innerHTML = `<div class="cell"><div class="l">Atenção</div><div class="d">Informe um valor positivo e uma data a partir de 07/1994 (início do Real).</div></div>`; return; }
+  if(!fs){ out.innerHTML = `<div class="cell"><div class="l">Sem dados</div><div class="d">Não há concursos das loterias selecionadas em ${String(mes).padStart(2,"0")}/${ano}, nem no ano, para estimar o fator da Selic.</div></div>`; return; }
+  const corrigido = valor*fs.f, smHoje = SM_HOJE[1], nSM = valor/sm0, mantido = nSM*smHoje;
+  const reajusteSM = smHoje/sm0, dif = (fs.f/reajusteSM - 1)*100;
+  const cel = (l,v,dd) => `<div class="cell"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${dd}</div></div>`;
+  out.innerHTML =
+    cel("Valor corrigido pela Selic até hoje", brl(corrigido), `fator ×${num(fs.f,3)} (média ${fs.de})`) +
+    cel(`Salário mínimo em ${String(mes).padStart(2,"0")}/${ano}`, brl(sm0), `o valor equivalia a ${num(nSM,1)} salários mínimos`) +
+    cel(`Salário mínimo hoje (${SM_HOJE[0].split("-").reverse().join("/")})`, brl(smHoje), `o valor corrigido pela Selic compra ${num(corrigido/smHoje,1)} salários mínimos de hoje`) +
+    cel("Mesmo poder de compra em salários mínimos", brl(mantido), `${num(nSM,1)} SM × ${brl(smHoje)}`) +
+    cel("Selic × salário mínimo", `${dif>=0?"+":""}${num(dif,1)}%`, `Selic ×${num(fs.f,2)} contra reajuste do mínimo ×${num(reajusteSM,2)}: a Selic ${dif>=0?"superou":"ficou abaixo do"} reajuste do mínimo${dif>=0?"":""} no período`.replace("superou reajuste","superou o reajuste"));
+}
+
+// ---------- UI ----------
+function segHTML(id, opcoes, atual){
+  return `<div class="seg" id="${id}">` + opcoes.map(([v,t]) => `<button data-v="${v}" aria-pressed="${v===atual}">${t}</button>`).join("") + `</div>`;
+}
 function esqueleto(){
   $("#app").innerHTML = `
     <div class="controls">
-      <div class="seg" id="sBase">
-        <button data-v="corrigido" aria-pressed="true">Corrigido (Selic)</button>
-        <button data-v="nominal" aria-pressed="false">Nominal</button>
-      </div>
-      <div class="seg" id="sPer">
-        <button data-v="ano" aria-pressed="true">Por Ano</button>
-        <button data-v="mes" aria-pressed="false">Por Mês</button>
-      </div>
-      <div class="seg" id="sEra">
-        <button data-v="todas" aria-pressed="true">Todas as Eras</button>
-        <button data-v="pre" aria-pressed="false">Pré-2015</button>
-        <button data-v="pos" aria-pressed="false">Pós-2015</button>
-      </div>
+      ${segHTML("sBase", [["corrigido","Corrigido (Selic)"],["nominal","Nominal"]], state.base)}
+      ${segHTML("sPer", [["ano","Por Ano"],["mes","Por Mês"]], state.per)}
+      ${segHTML("sEra", [["todas","Todas as Eras"],["pre","Pré-2015"],["pos","Pós-2015"]], state.era)}
     </div>
-    
+
+    <div class="card resumo" id="resumo"></div>
     <div class="kpis" id="kpis"></div>
-    
+
     <div class="grid">
       <div class="card">
         <h2>Distribuição Estimada da Arrecadação</h2>
         <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
         <div class="legend" id="l-donut" style="justify-content:center"></div>
-        <p class="note">Estimativa ilustrativa: parte do prêmio bruto e aplica percentuais fixos (prêmios 43,35%, repasses 48%, custos 20% da arrecadação), que somam mais de 100%. Não usa a arrecadação real de cada concurso e varia entre loterias.</p>
+        <p class="note">Passe o mouse (ou toque) nas fatias para ver a base legal. Estimativa: a arrecadação é o prêmio bruto ÷ 43,79% e os demais percentuais vêm da Lei 13.756/2018, art. 16, II (loteria de prognósticos numéricos, vigente desde 2019; somam 100%). Foi aplicada a todo o histórico e a todas as loterias, então é ilustrativa: antes de 2019 e em outras modalidades a divisão era diferente. A lei foi alterada depois; confira o texto vigente.</p>
       </div>
 
       <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
-      <div class="card"><h2 id="t2"></h2><div id="c2"></div><div class="legend" id="l2"></div></div>
+      <div class="card">
+        <div class="cardhead"><h2 id="t2"></h2>
+          ${segHTML("sModo", [["stack","Empilhado"],["group","Agrupado"]], state.modo)}</div>
+        <div id="c2"></div><div class="legend" id="l2"></div>
+        <p class="note" id="l-marcas"></p>
+      </div>
+
+      <div class="card">
+        <h2>Poder de Compra em Salários Mínimos</h2>
+        <div class="sim-in">
+          <label>Valor do prêmio (R$, na época)<input type="number" id="simValor" min="1" step="1000" value="${state.sim.valor}"></label>
+          <label>Mês<select id="simMes">${["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"].map((m,i)=>`<option value="${i+1}" ${i+1===state.sim.mes?"selected":""}>${m}</option>`).join("")}</select></label>
+          <label>Ano<input type="number" id="simAno" min="1994" max="2100" value="${state.sim.ano}"></label>
+        </div>
+        <div class="sim-out" id="sim-out"></div>
+        <p class="note">Corrige pela Selic (só Selic, sem IPCA) com o fator médio dos concursos do mês das loterias selecionadas, ponderado pelos prêmios; é uma aproximação, não a data exata de um sorteio. Salário mínimo nacional vigente no mês, conforme tabela de <a href="https://www.contabeis.com.br/tabelas/salario-minimo/" target="_blank" rel="noopener">contabeis.com.br</a> (o valor de 2026 não foi conferido no decreto).</p>
+      </div>
+
       <div class="card"><h2>Totais por Loteria <span class="sub">(respeita o filtro de período)</span></h2>
         <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Bruto Pago</th><th>IR Arrecadado</th><th>Alíq. IR</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
       <div class="card"><h2>Resumo por Período</h2><div class="scroll"><table><thead id="tp-h"></thead><tbody id="tp-b"></tbody></table></div></div>
-      <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº ou data)</span></h2>
-        <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso ou data…"></p>
+      <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº, data ou loteria)</span></h2>
+        <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso, data ou loteria…"></p>
         <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concurso</th><th>Data</th><th>Bruto Pago</th><th>IR Arrecadado</th></tr></thead><tbody id="tc-b"></tbody></table></div></div>
     </div>`;
 
-  for(const [id,key] of [["#sBase","base"],["#sPer","per"],["#sEra","era"]]){
+  for(const [id,key] of [["#sBase","base"],["#sPer","per"],["#sEra","era"],["#sModo","modo"]]){
     $(id).addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return;
       state[key] = b.dataset.v; $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); render(); });
   }
-  
-  $("#busca")?.addEventListener("input", renderConcursos);
+  $("#busca").addEventListener("input", renderConcursos);
+  $("#simValor").addEventListener("input", e => { state.sim.valor = parseFloat(e.target.value); renderSim(); });
+  $("#simMes").addEventListener("change", e => { state.sim.mes = +e.target.value; renderSim(); });
+  $("#simAno").addEventListener("input", e => { state.sim.ano = parseInt(e.target.value); renderSim(); });
 }
 
-// Carrega e consolida dados de múltiplas loterias simultaneamente
-async function carregarSelecionadas(){
-  if(!state.selectedSlugs.length) return;
-  
-  const loteriasDados = [];
-  for(const slug of state.selectedSlugs){
-    const tentativas = [`data/${slug}/`, `docs/data/${slug}/`, `./data/${slug}/`];
-    for(const path of tentativas){
+// ---------- Carga (com cache por loteria) ----------
+function carregarLoteria(slug){
+  if(state.cache[slug]) return state.cache[slug];
+  const p = (async () => {
+    const bases = state.basePath ? [state.basePath] : ["data/","docs/data/","./data/"];
+    for(const b of bases){
       try{
-        const [meta, ano, mes, faixa, concursos] = await Promise.all(
-          ["meta","resumo_ano","resumo_mes","resumo_ano_faixa","concursos"].map(n=>getJSON(path+n+".json")));
-        loteriasDados.push({meta, ano, mes, faixa, concursos});
-        break;
-      }catch(e){ continue; }
+        const [meta, ano, mes, concursos] = await Promise.all(
+          ["meta","resumo_ano","resumo_mes","concursos"].map(n => getJSON(`${b}${slug}/${n}.json`)));
+        state.basePath = b;
+        return { slug, meta, ano: ano||[], mes: mes||[], concursos: concursos||[] };
+      }catch(e){}
     }
-  }
+    throw new Error("sem dados: " + slug);
+  })();
+  state.cache[slug] = p;
+  p.catch(() => { delete state.cache[slug]; });     // falha não fica em cache: nova tentativa no próximo clique
+  return p;
+}
 
-  if(!loteriasDados.length){
-    $("#app").innerHTML = `<div class="card empty">Selecione ao menos uma loteria com dados disponíveis.</div>`;
+const SOMAS = ["concursos","bruto_corrigido","bruto_nominal","ir_corrigido","ir_nominal"];
+function agrega(dados, campo, chave){
+  const mapa = {};
+  for(const d of dados) for(const r of d[campo]){
+    const m = mapa[r[chave]] ||= Object.fromEntries([[chave, r[chave]], ...SOMAS.map(k => [k,0])]);
+    for(const k of SOMAS) m[k] += r[k] || 0;
+  }
+  return Object.values(mapa);
+}
+
+async function carregarSelecionadas(){
+  const tok = ++state.tok;
+  if(!state.selectedSlugs.length){
+    state.d = null; state.dados = [];
+    $("#app").hidden = true; $("#vazio").hidden = false; $("#banner").innerHTML = ""; $("#atualizado").textContent = "";
     return;
   }
-
-  // Agrega dados de todas as loterias selecionadas
-  const anoMap = {}, mesMap = {}, concursosList = [];
-  loteriasDados.forEach(d => {
-    (d.ano || []).forEach(r => {
-      if(!anoMap[r.ano]) anoMap[r.ano] = {ano: r.ano, concursos:0, bruto_corrigido:0, bruto_nominal:0, ir_corrigido:0, ir_nominal:0};
-      anoMap[r.ano].concursos += r.concursos || 0;
-      anoMap[r.ano].bruto_corrigido += r.bruto_corrigido || 0;
-      anoMap[r.ano].bruto_nominal += r.bruto_nominal || 0;
-      anoMap[r.ano].ir_corrigido += r.ir_corrigido || 0;
-      anoMap[r.ano].ir_nominal += r.ir_nominal || 0;
-    });
-    (d.mes || []).forEach(r => {
-      if(!mesMap[r.mes]) mesMap[r.mes] = {mes: r.mes, concursos:0, bruto_corrigido:0, bruto_nominal:0, ir_corrigido:0, ir_nominal:0};
-      mesMap[r.mes].concursos += r.concursos || 0;
-      mesMap[r.mes].bruto_corrigido += r.bruto_corrigido || 0;
-      mesMap[r.mes].bruto_nominal += r.bruto_nominal || 0;
-      mesMap[r.mes].ir_corrigido += r.ir_corrigido || 0;
-      mesMap[r.mes].ir_nominal += r.ir_nominal || 0;
-    });
-    (d.concursos || []).forEach(c => concursosList.push({...c, loteria: d.meta.nome}));
-  });
-
+  const res = await Promise.allSettled(state.selectedSlugs.map(carregarLoteria));
+  if(tok !== state.tok) return;                       // houve outro clique enquanto carregava
+  const dados = res.filter(r => r.status === "fulfilled").map(r => r.value);
+  if(!dados.length){
+    $("#app").hidden = true; $("#vazio").hidden = false;
+    $("#vazio").textContent = "Não foi possível carregar os dados das loterias selecionadas.";
+    return;
+  }
+  $("#app").hidden = false; $("#vazio").hidden = true;
+  state.dados = dados;
   state.d = {
-    meta: loteriasDados[0].meta,
-    ano: Object.values(anoMap).sort((a,b)=>a.ano-b.ano),
-    mes: Object.values(mesMap).sort((a,b)=>a.mes.localeCompare(b.mes)),
-    concursos: concursosList.sort((a,b)=> (a.data < b.data ? -1 : a.data > b.data ? 1 : a.concurso - b.concurso)),
-    porLoteria: loteriasDados.map(d => ({nome: d.meta.nome, ano: d.ano || []}))
+    meta: dados[0].meta,
+    ano: agrega(dados, "ano", "ano").sort((a,b)=>a.ano-b.ano),
+    mes: agrega(dados, "mes", "mes").sort((a,b)=>a.mes.localeCompare(b.mes)),
+    concursos: dados.flatMap(d => d.concursos.map(c => ({...c, slug:d.slug, loteria:d.meta.nome})))
+      .sort((a,b)=> a.data < b.data ? -1 : a.data > b.data ? 1 : a.concurso - b.concurso),
+    porLoteria: dados.map(d => ({slug:d.slug, nome:d.meta.nome, ano:d.ano}))
   };
 
-  const maisRecente = loteriasDados.map(d => d.meta.atualizado_em).sort().pop();
-  $("#atualizado").textContent = `Atualizado em ${new Date(maisRecente).toLocaleString("pt-BR")} · Selic até ${fmtData(loteriasDados[0].meta.selic_ate)}`;
+  const maisRecente = dados.map(d => d.meta.atualizado_em).sort().pop();
+  $("#atualizado").textContent = `Atualizado em ${new Date(maisRecente).toLocaleString("pt-BR")} · Selic até ${fmtData(dados[0].meta.selic_ate)}`;
 
-  // aviso: regras de IR ainda nao conferidas (por loteria e periodo)
-  const avisos = loteriasDados.flatMap(d => (d.meta.regras_ir_pendentes || []).map(p =>
+  const avisos = dados.flatMap(d => (d.meta.regras_ir_pendentes || []).map(p =>
     `${d.meta.nome}: ${fmtData(p.de)}${p.ate ? " a " + fmtData(p.ate) : " em diante"}`));
   $("#banner").innerHTML = avisos.length
-    ? `<div class="banner"><b>Atenção:</b> o limite de isenção do IR ainda não foi conferido com a legislação em: ${avisos.join("; ")}. O IR desses períodos é provisório.</div>`
-    : "";
-  esqueleto(); 
+    ? `<div class="banner"><b>Atenção:</b> o limite de isenção do IR ainda não foi conferido com a legislação em: ${avisos.join("; ")}. O IR desses períodos é provisório.</div>` : "";
   render();
 }
 
+// ---------- Seleção de loterias e períodos ----------
+function sincronizaChecks(){
+  document.querySelectorAll(".chkLot").forEach(c => c.checked = state.selectedSlugs.includes(c.dataset.slug));
+  const todas = state.loteriasLista.map(l => l.slug);
+  const principais = PRINCIPAIS.filter(s => todas.includes(s));
+  const igual = (a,b) => a.length === b.length && a.every(x => b.includes(x));
+  $("#btnTodas").setAttribute("aria-pressed", igual(state.selectedSlugs, todas));
+  $("#btnPrincipais").setAttribute("aria-pressed", principais.length > 0 && igual(state.selectedSlugs, principais));
+  $("#btnLimpar").setAttribute("aria-pressed", state.selectedSlugs.length === 0);
+}
+function selecionar(slugs){
+  state.selectedSlugs = slugs; sincronizaChecks(); carregarSelecionadas();
+}
 function renderCheckboxes(){
-  const container = $("#lotteryCheckboxes");
-  let html = `
-    <label class="checkbox-item">
-      <input type="checkbox" id="chkAll" ${state.selectedSlugs.length === state.loteriasLista.length ? "checked" : ""}> 
-      <strong>TODAS AS LOTERIAS</strong>
-    </label>
-  `;
-  
-  state.loteriasLista.forEach(l => {
-    const isChecked = state.selectedSlugs.includes(l.slug);
-    html += `
-      <label class="checkbox-item">
-        <input type="checkbox" class="chkLot" data-slug="${l.slug}" ${isChecked ? "checked" : ""}> ${l.nome}
-      </label>
-    `;
-  });
-  
-  container.innerHTML = html;
+  $("#lotteryCheckboxes").innerHTML = state.loteriasLista.map(l => `
+    <label class="checkbox-item"><input type="checkbox" class="chkLot" data-slug="${l.slug}">
+      <span class="dot" style="background:${corLot(l.slug)}"></span>${l.nome}</label>`).join("");
+  document.querySelectorAll(".chkLot").forEach(chk => chk.addEventListener("change", () =>
+    selecionar(state.loteriasLista.map(l => l.slug).filter(s => document.querySelector(`.chkLot[data-slug="${s}"]`).checked))));
+  $("#btnTodas").addEventListener("click", () => selecionar(state.loteriasLista.map(l => l.slug)));
+  $("#btnPrincipais").addEventListener("click", () => selecionar(PRINCIPAIS.filter(s => state.loteriasLista.some(l => l.slug === s))));
+  $("#btnLimpar").addEventListener("click", () => selecionar([]));
+}
 
-  // Event Listeners dos Checkboxes
-  $("#chkAll").addEventListener("change", e => {
-    const isChecked = e.target.checked;
-    document.querySelectorAll(".chkLot").forEach(c => c.checked = isChecked);
-    state.selectedSlugs = isChecked ? state.loteriasLista.map(l => l.slug) : [];
-    carregarSelecionadas();
-  });
-
-  document.querySelectorAll(".chkLot").forEach(chk => {
-    chk.addEventListener("change", () => {
-      const selected = Array.from(document.querySelectorAll(".chkLot:checked")).map(c => c.dataset.slug);
-      state.selectedSlugs = selected;
-      $("#chkAll").checked = (selected.length === state.loteriasLista.length);
-      carregarSelecionadas();
-    });
+function definePeriodo(de, ate){
+  state.anoDe = de; state.anoAte = ate;
+  $("#anoDe").value = de ?? ""; $("#anoAte").value = ate ?? "";
+  render();
+}
+function marcarPresets(){
+  const fim = anoFinal(), {anoDe:de, anoAte:ate} = state;
+  document.querySelectorAll("#presets .btn").forEach(b => {
+    const p = b.dataset.p;
+    b.setAttribute("aria-pressed", p === "todo" ? (de == null && ate == null) : (ate === fim && de === fim - (+p) + 1));
   });
 }
 
 (async function init(){
-  let lista=[]; 
-  const caminhosMeta = ["data/loterias.json", "docs/data/loterias.json", "./data/loterias.json"];
-  for(const p of caminhosMeta){
+  let lista = [];
+  for(const p of ["data/loterias.json", "docs/data/loterias.json", "./data/loterias.json"]){
     try{ lista = await getJSON(p); if(lista.length) break; }catch(e){}
   }
-  
-  if(!lista.length){ 
-    $("#app").innerHTML = `<div class="card empty">Carregando dados das loterias…</div>`; 
-    return; 
-  }
-  
+  if(!lista.length){ $("#app").innerHTML = `<div class="card empty">Carregando dados das loterias…</div>`; return; }
+
   state.loteriasLista = lista;
-  state.selectedSlugs = lista.map(l => l.slug); // Padrão: Todas selecionadas
-  
+  esqueleto();
   renderCheckboxes();
-  
-  // Event listeners dos inputs de ano
-  $("#anoDe").addEventListener("input", e => {
-    state.anoDe = e.target.value ? parseInt(e.target.value) : null;
-    render();
-  });
-  
-  $("#anoAte").addEventListener("input", e => {
-    state.anoAte = e.target.value ? parseInt(e.target.value) : null;
-    render();
+
+  $("#anoDe").addEventListener("input", e => { state.anoDe = e.target.value ? parseInt(e.target.value) : null; render(); });
+  $("#anoAte").addEventListener("input", e => { state.anoAte = e.target.value ? parseInt(e.target.value) : null; render(); });
+  $("#presets").addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b) return;
+    const fim = anoFinal();
+    b.dataset.p === "todo" ? definePeriodo(null, null) : definePeriodo(fim - (+b.dataset.p) + 1, fim);
   });
 
-  carregarSelecionadas();
+  selecionar(lista.map(l => l.slug));       // padrão: todas
 })();
 </script>
 </body>

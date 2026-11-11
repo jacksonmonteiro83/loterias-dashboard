@@ -65,5 +65,9 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
   do GitHub Actions e no navegador). Os espelhos públicos achados só trazem as dezenas, sem prêmios por faixa.
   Quando a Caixa consertar, troque para `"ativa": True` em `LOTERIAS` e rode o workflow.
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
-- O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos que somam mais de 100% e não a arrecadação
-  real (que falta em vários concursos e, nos acumulados, fica abaixo do prêmio pago): é só ilustrativo.
+- O gráfico "Distribuição Estimada da Arrecadação" estima a arrecadação como prêmio bruto ÷ 43,79% e divide pelos percentuais
+  da Lei 13.756/2018, art. 16, II (prêmios+IR 43,79%, repasses sociais 37,08%, custeio 19,13%; somam 100%). Aplica o regime de 2019
+  a todo o histórico e a todas as loterias: é ilustrativo. O texto da lei foi lido por resumo (câmara.leg.br), não literalmente.
+- **Simulador (salários mínimos):** fator Selic médio do mês das loterias selecionadas (aproximação); série do salário mínimo de
+  contabeis.com.br, não conferida nos decretos (2026 em especial).
+- **Marcadores de concursos especiais:** Virada, São João, Independência e Páscoa são detectados por regra de data + pico (≥ 2× a mediana do ano).
