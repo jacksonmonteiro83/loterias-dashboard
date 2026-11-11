@@ -2,7 +2,7 @@
 
 Dashboard estático (GitHub Pages) com, para cada loteria da Caixa, os prêmios brutos pagos por faixa,
 corrigidos pela Selic até hoje, o IR arrecadado e os totais por mês e por ano.
-Loterias: Mega-Sena, Lotofácil, Quina, Lotomania, Dupla Sena, Timemania, Dia de Sorte, Super Sete e +Milionária.
+Loterias: Mega-Sena, Lotofácil, Quina, Lotomania, Dupla Sena, Timemania, Dia de Sorte e +Milionária (Super Sete desligada, veja abaixo).
 Atualiza sozinho todo dia à meia-noite (Brasília).
 
 ## Como funciona
@@ -60,7 +60,8 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
 - **Antes de 03/1996 (Quina):** regime não verificado.
 - **Dupla Sena:** os concursos recentes trazem 8 faixas (os dois sorteios), mas alguns períodos antigos
   trazem 4 ou 6; conferir se o histórico antigo está completo.
-- **Super Sete:** a API da Caixa respondeu HTTP 500 na consulta do último concurso; o script usa uma
-  busca por sondagem como plano B. Se a loteria seguir falhando, veja o log da tarefa `coletar (supersete)`.
+- **Super Sete (desligada):** a API da Caixa responde HTTP 500 em `/supersete` e em `/supersete/1` quando
+  chamada pelo GitHub Actions. Teste a URL `https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete`
+  no navegador; se abrir, religue com `"ativa": True` em `LOTERIAS` (pode ser bloqueio do IP do Actions).
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
 - O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos, não a arrecadação real.

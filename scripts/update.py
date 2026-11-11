@@ -39,7 +39,11 @@ LOTERIAS = {
     "duplasena":      {"nome": "Dupla Sena",    "primeiro_concurso": date(2001, 11, 6)},
     "timemania":      {"nome": "Timemania",     "primeiro_concurso": date(2008, 3, 1)},
     "diadesorte":     {"nome": "Dia de Sorte",  "primeiro_concurso": date(2018, 5, 19)},
-    "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2)},
+    # Desligada: a API da Caixa responde HTTP 500 em /supersete e em /supersete/1 quando chamada
+    # pelo GitHub Actions. Para religar, troque por True depois de testar a URL
+    # https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete no navegador.
+    "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2),
+                       "ativa": False},
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
 }
 # Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos ate `cruzeiro_real_ate`.
