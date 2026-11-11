@@ -34,7 +34,7 @@ FAKE = {
         3: concurso(3, "29/10/2026", [("6 acertos", 2, 500000.0), ("5 acertos", 0, 0.0), ("4 acertos", 0, 0.0)]),
     },
     "quina": {
-        1: concurso(1, "13/03/1994", [("5 acertos", 1, 50000.0)]),
+        1: concurso(1, "13/03/1994", [("5 acertos", 1, 55000000.0)]),   # em CR$
         2: concurso(2, "01/03/2005", [("5 acertos", 2, 20.0)]),
         3: concurso(3, "15/05/2024", [("5 acertos", 1, 100000.0)]),
         4: concurso(4, "28/10/2026", [("5 acertos", 3, 1000.0)]),
@@ -45,7 +45,8 @@ FAKE = {
 def instala_fakes(chamadas):
     update.LOTERIAS = {
         "megasena": {"nome": "Mega-Sena", "primeiro_concurso": date(1996, 3, 11)},
-        "quina": {"nome": "Quina", "primeiro_concurso": date(1994, 3, 13)},
+        "quina": {"nome": "Quina", "primeiro_concurso": date(1994, 3, 13),
+                  "cruzeiro_real_ate": date(1994, 6, 30)},
     }
     update.fetch_ultimo = lambda slug: max(FAKE[slug])
     update.fetch_concurso = lambda slug, n: (chamadas["concursos"].append((slug, n)), FAKE[slug][n])[1]
@@ -95,6 +96,9 @@ def main(destino=None):
     qir = quina.groupby("concurso").ir_nominal.sum()
     assert abs(qir[2] - 12.0) < 1e-9 and qir[4] == 0
     assert abs(qir[3] - 0.30 * (100000 - 2259.20)) < 1e-4
+    # Quina 1994 em Cruzeiros Reais: 55.000.000 CR$ / 2750 = R$ 20.000 (IR 1994: 30% do total)
+    q1 = quina[quina.concurso == 1].iloc[0]
+    assert abs(q1.bruto_nominal - 20000.0) < 1e-6 and abs(q1.ir_nominal - 6000.0) < 1e-6
 
     # pendencias de regra de IR por loteria
     assert meta_m["regras_ir_pendentes"] == [{"de": "2025-05-01", "ate": None}]
@@ -126,6 +130,21 @@ def main(destino=None):
     assert update.main(["coletar"], root=raiz, hoje=HOJE) == 1
     update.fetch_ultimo = original
     assert update.main(["coletar", "xyz"], root=raiz) == 2
+
+    # plano B: consulta do 'ultimo' falha (HTTP 500) -> acha o ultimo por sondagem
+    def get_fake(url, tentativas=5):
+        if url.endswith("/megasena"):
+            raise RuntimeError("HTTP 500")
+        n = int(url.rsplit("/", 1)[1])
+        return FAKE["megasena"].get(n)          # None (404) alem do ultimo
+    update_get, update._get_json = update._get_json, get_fake
+    original_fu = update.fetch_ultimo
+    try:
+        import importlib; real = importlib.reload(update)   # restaura fetch_ultimo real
+        real._get_json = get_fake
+        assert real.fetch_ultimo("megasena") == 3
+    finally:
+        update.fetch_ultimo = original_fu; update._get_json = update_get
     print("OK: pipeline validado. Saida em", raiz)
 
 

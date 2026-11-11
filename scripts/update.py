@@ -31,7 +31,10 @@ ROOT = Path(__file__).resolve().parent.parent
 LOTERIAS = {
     "megasena":       {"nome": "Mega-Sena",     "primeiro_concurso": date(1996, 3, 11)},
     "lotofacil":      {"nome": "Lotofácil",     "primeiro_concurso": date(2003, 9, 29)},
-    "quina":          {"nome": "Quina",         "primeiro_concurso": date(1994, 3, 13)},
+    # Quina: ate o concurso de 26/06/1994 a Caixa informa os premios em Cruzeiros Reais (CR$);
+    # a partir de 07/07/1994, em Reais. Confirmado nos dados reais (concursos 26 e 30).
+    "quina":          {"nome": "Quina",         "primeiro_concurso": date(1994, 3, 13),
+                       "cruzeiro_real_ate": date(1994, 6, 30)},
     "lotomania":      {"nome": "Lotomania",     "primeiro_concurso": date(1999, 10, 2)},
     "duplasena":      {"nome": "Dupla Sena",    "primeiro_concurso": date(2001, 11, 6)},
     "timemania":      {"nome": "Timemania",     "primeiro_concurso": date(2008, 3, 1)},
@@ -39,9 +42,9 @@ LOTERIAS = {
     "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2)},
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
 }
-# Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos anteriores a 01/07/1994.
-# Desligada ate conferir, no dado real da Caixa, em que moeda esta o Quina antigo:
-#   LOTERIAS["quina"]["cruzeiro_real_ate"] = date(1994, 6, 30)
+# Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos ate `cruzeiro_real_ate`.
+# Como o indice Selic e continuo, dividir o valor em CR$ por 2750 e depois aplicar o fator
+# da data do concurso ate hoje equivale a converter na data da troca da moeda.
 CRUZEIRO_REAL_POR_REAL = 2750.0
 
 CAIXA = "https://servicebus2.caixa.gov.br/portaldeloterias/api"
@@ -72,11 +75,38 @@ def _get_json(url, tentativas=5):
     raise RuntimeError(f"Falha ao baixar {url}: {ultimo_erro}")
 
 
+def _existe(slug, n):
+    try:
+        c = _get_json(f"{CAIXA}/{slug}/{n}", tentativas=2)
+    except RuntimeError:
+        return False
+    return isinstance(c, dict) and "numero" in c
+
+
+def ultimo_por_sondagem(slug):
+    """Plano B quando a consulta do 'ultimo concurso' falha (ex.: HTTP 500 na Super Sete):
+    acha o maior numero existente por busca exponencial + binaria (concursos sao 1..N)."""
+    if not _existe(slug, 1):
+        raise RuntimeError(f"Concurso 1 de {slug} indisponivel")
+    ok, passo = 1, 1
+    while _existe(slug, ok + passo):
+        ok += passo
+        passo *= 2
+    lo, hi = ok, ok + passo          # lo existe, hi nao
+    while hi - lo > 1:
+        meio = (lo + hi) // 2
+        lo, hi = (meio, hi) if _existe(slug, meio) else (lo, meio)
+    return lo
+
+
 def fetch_ultimo(slug):
-    res = _get_json(f"{CAIXA}/{slug}")
-    if not isinstance(res, dict) or "numero" not in res:
-        raise RuntimeError(f"Nao foi possivel obter o ultimo concurso de {slug}")
-    return int(res["numero"])
+    try:
+        res = _get_json(f"{CAIXA}/{slug}")
+        if isinstance(res, dict) and "numero" in res:
+            return int(res["numero"])
+    except RuntimeError as e:
+        print(f"[{slug}] consulta do ultimo concurso falhou ({e}); sondando...", file=sys.stderr)
+    return ultimo_por_sondagem(slug)
 
 
 def fetch_concurso(slug, n):

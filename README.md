@@ -40,6 +40,8 @@ python tests/test_pipeline.py            # teste sem rede, dados sintéticos
 ## Método de cálculo
 
 - **Bruto da faixa** = ganhadores × prêmio por ganhador (valor informado pela Caixa, tratado como bruto).
+- **Quina antes de 07/1994:** a Caixa informa os prêmios em Cruzeiros Reais até 26/06/1994. O script divide
+  por 2.750 (conversão para Real) nesses concursos (`cruzeiro_real_ate`).
 - **Fator Selic** = produto de (1 + taxa_dia/100) dos dias **após** a data do concurso até hoje (SGS 11).
   Só Selic; não inclui IPCA.
 - **IR** (`regras_ir.csv`), por ganhador, 30% retido na fonte, tributação exclusiva:
@@ -56,8 +58,9 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
 - **A partir de 05/2025:** fontes divergem sobre o limite (R$ 2.428,80 desde 05/2025?) e a Lei 15.270/2025
   (isenção efetiva até R$ 5.000 em 2026) pode ter mudado o limite do art. 56. Confirmar na Receita/Caixa.
 - **Antes de 03/1996 (Quina):** regime não verificado.
-- **Quina antes de 07/1994:** valores podem estar em Cruzeiros Reais. Conferir o concurso 1 em
-  `data/raw/quina.json`; se estiver em CR$, ative `cruzeiro_real_ate` na entrada da Quina.
-- **Dupla Sena:** conferir se `data/raw/duplasena.json` traz as faixas dos dois sorteios.
+- **Dupla Sena:** os concursos recentes trazem 8 faixas (os dois sorteios), mas alguns períodos antigos
+  trazem 4 ou 6; conferir se o histórico antigo está completo.
+- **Super Sete:** a API da Caixa respondeu HTTP 500 na consulta do último concurso; o script usa uma
+  busca por sondagem como plano B. Se a loteria seguir falhando, veja o log da tarefa `coletar (supersete)`.
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
 - O gráfico "Distribuição Estimada da Arrecadação" usa percentuais fixos, não a arrecadação real.
