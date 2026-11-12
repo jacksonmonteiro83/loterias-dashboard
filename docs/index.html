@@ -89,6 +89,8 @@ a{color:var(--accent)}
 .mk{cursor:help}
 .badge{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;
   color:var(--lc);background:color-mix(in srgb,var(--lc) 16%,transparent);border:1px solid color-mix(in srgb,var(--lc) 40%,transparent)}
+.r100{display:flex;height:34px;border-radius:8px;overflow:hidden;margin-top:12px;gap:2px}
+.r100 div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;min-width:2px;cursor:help;text-shadow:0 0 3px rgba(0,0,0,.55)}
 .sim-in{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:14px}
 .sim-in label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
 .sim-out{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
@@ -164,13 +166,17 @@ const SM = [["1994-07",64.79],["1994-09",70],["1995-05",100],["1996-05",112],["1
 const smEm = ym => { let v = null; for(const [k,x] of SM){ if(k <= ym) v = x; else break; } return v; };
 const SM_HOJE = SM[SM.length-1];
 
-// Destinação legal (Lei 13.756/2018, art. 16, II — loteria de prognósticos numéricos, desde 01/01/2019).
-const LEI = { premiosEIR:43.79, repasses:37.08, custeio:19.13 };
-const TIP_DONUT = {
-  liquidos: "Prêmios líquidos\nParte do prêmio bruto que fica com os ganhadores, já descontado o IRRF. Na Lei 13.756/2018 (art. 16, II), “prêmios e imposto de renda” juntos somam 43,79% da arrecadação.",
-  repasses: "Repasses Sociais — 37,08% da arrecadação (Lei 13.756/2018, art. 16, II):\n• Seguridade Social: 17,32%\n• Segurança Pública (FNSP): 6,80%\n• Esporte: 4,36% (Min. do Esporte 3,53%; CBC 0,46%; CBDE 0,22%; CBDU 0,11%; CBCP 0,04%)\n• Sistema Penitenciário (Funpen): 3,00%\n• Cultura (FNC): 2,91%\n• Comitê Olímpico (COB): 1,73%\n• Comitê Paralímpico (CPB): 0,96%\nO FIES não aparece nessa divisão. Percentuais de 2019 em diante, aplicados a todo o período como estimativa.",
-  ir: "IRRF — Imposto de Renda retido na fonte e recolhido à União\n30% por ganhador, tributação exclusiva. Desde 2008, só sobre o que excede a 1ª faixa da tabela mensal do IRPF (Lei 11.941/2009, art. 56); até 2007, sobre o prêmio inteiro acima de R$ 11,10 (RIR/1999, art. 676). Na lei de 2018 ele está dentro dos 43,79% de “prêmios e IR”.",
-  custeio: "Custeio e manutenção do agente operador (Caixa) — 19,13% da arrecadação (Lei 13.756/2018, art. 16, II)."
+// Divisão da arrecadação (% da arrecadação). Padrão: tabela atual da Caixa para a Mega-Sena (prêmios 43,35%; repasses 37,49%; custeio 19,13%).
+// Timemania: Lei 11.345/2006, art. 2º, texto original (clubes 22% não é governo nem operação; não verifiquei alterações posteriores).
+const SPLIT = { padrao:{ rep:37.49, cust:19.13, clubes:0 }, timemania:{ rep:12, cust:20, clubes:22 } };
+const splitDe = slug => SPLIT[slug] || SPLIT.padrao;
+const TIP = {
+  apost: "Apostadores\nPrêmio bruto informado pela Caixa menos o IRRF: o que as pessoas de fato recebem.",
+  ir: "IRRF — Imposto de Renda retido na fonte e recolhido à União\n30% por ganhador, tributação exclusiva. Desde 2008, só sobre o que excede a 1ª faixa da tabela mensal do IRPF (Lei 11.941/2009, art. 56); até 2007, sobre o prêmio inteiro acima de R$ 11,10 (RIR/1999, art. 676).",
+  rep: "Repasses sociais (tabela atual da Caixa para a Mega-Sena, % da arrecadação; 37,49% no total):\n• Seguridade Social: 17,32%\n• Segurança Pública (FNSP): 9,26%\n• Cultura (FNC): 2,92%\n• Esporte (Ministério): 2,46%\n• Comitê Olímpico (COB): 1,73%\n• Comitê Paralímpico (CPB): 0,93%\n• Funpen: 1,00%\n• Outras entidades esportivas: 1,00% (CBC, CBDE, CBDU, Fenaclubs)\nO FIES não aparece nessa tabela. Aplicado a todo o histórico como estimativa; antes de 2019 a divisão era outra.",
+  cust: "Operação — custeio e manutenção do serviço (Caixa): 19,13% da arrecadação na tabela atual. A Caixa informa ainda 3,11% de comissão às lotéricas; não confirmei se já está dentro desses 19,13%.",
+  clubes: "Clubes de futebol (Timemania)\n22% da arrecadação pela Lei 11.345/2006 (texto original): remuneração dos clubes que cedem sua marca.",
+  resid: "Diferença sem destino identificado\nArrecadação menos prêmios, repasses e custeio estimados. Os prêmios informados pela Caixa somam ~33% da arrecadação (Mega-Sena, Quina), abaixo dos 43,35% da lei. A diferença é parecida com a parcela do IR, o que sugere que o valor informado já vem líquido do imposto; também podem entrar prêmios acumulados ou não pagos."
 };
 
 // Concursos especiais: detectados por regra de data + pico (valor ≥ 2× a mediana dos concursos da loteria no ano).
@@ -218,18 +224,18 @@ function niceMax(v){ const p = Math.pow(10, Math.floor(Math.log10(v||1))); const
 // ---------- Gráficos ----------
 // rows: [{label, valores:[...]}] ; series: [{nome, cor}] ; opt: {modo:"stack"|"group", marcas:{label:[{sym,cor,tip}]}}
 function barChart(el, rows, series, opt = {}){
-  const modo = opt.modo === "group" ? "group" : "stack", marcas = opt.marcas || {};
+  const modo = opt.modo === "group" ? "group" : "stack", marcas = opt.marcas || {}, fmt = opt.fmt || compact, fmtTip = opt.fmtTip || brl;
   const maxMarks = Math.max(0, ...rows.map(r => (marcas[r.label] || []).length));
   const W=960,H=300,L=64,R=8,T=12+maxMarks*16,B=28, iw=W-L-R, ih=H-T-B;
   const soma = r => r.valores.reduce((a,b)=>a+b,0);
   const topo = r => modo==="group" ? Math.max(0, ...r.valores) : soma(r);
-  const max = niceMax(Math.max(...rows.map(topo), 1));
+  const max = opt.max || niceMax(Math.max(...rows.map(topo), 1));
   const y = v => T + ih - v/max*ih;
   const bw = iw/(rows.length||1), gap = Math.min(4, bw*.2), n = series.length;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
   for(let i=0;i<=4;i++){ const v=max/4*i, yy=y(v);
     s += `<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/>`;
-    s += `<text x="${L-6}" y="${yy+4}" text-anchor="end">${compact(v)}</text>`; }
+    s += `<text x="${L-6}" y="${yy+4}" text-anchor="end">${fmt(v)}</text>`; }
   const passo = Math.max(1, Math.ceil(rows.length / Math.max(1, Math.floor(iw/46))));
   rows.forEach((r,i)=>{
     const x = L+i*bw+gap/2, w = Math.max(1,bw-gap);
@@ -255,7 +261,7 @@ function barChart(el, rows, series, opt = {}){
   el.innerHTML = s;
   el.querySelectorAll("rect").forEach(rc => {
     const r = rows[+rc.dataset.i], k = +rc.dataset.k;
-    bindTip(rc, `${r.label} · ${series[k].nome}: ${brl(r.valores[k])}` + (n>1 ? `\nTotal do período: ${brl(soma(r))}` : ""));
+    bindTip(rc, `${r.label} · ${series[k].nome}: ${fmtTip(r.valores[k], r, k)}` + (n>1 && !opt.max ? `\nTotal do período: ${fmtTip(soma(r), r, -1)}` : ""));
   });
   el.querySelectorAll(".mk").forEach(g => bindTip(g, marcas[rows[+g.dataset.i].label][+g.dataset.j].tip));
 }
@@ -355,40 +361,98 @@ function montarMarcas(suf, chave){
 // ---------- Render ----------
 function badge(slug, nome){ return `<span class="badge" style="--lc:${corLot(slug)}">${nome}</span>`; }
 
+// ---------- Modelo: quem fica com cada real arrecadado ----------
+const SERIES_G = [
+  { k:"apost",  nome:"Apostadores (prêmio líquido)", cor:"var(--c1)", tip:TIP.apost },
+  { k:"ir",     nome:"IRRF (União)",                  cor:"var(--c2)", tip:TIP.ir },
+  { k:"rep",    nome:"Repasses sociais",              cor:"var(--c3)", tip:TIP.rep },
+  { k:"cust",   nome:"Operação (custeio da Caixa)",   cor:"var(--c5)", tip:TIP.cust },
+  { k:"clubes", nome:"Clubes (Timemania)",            cor:"var(--c4)", tip:TIP.clubes },
+  { k:"resid",  nome:"Diferença sem destino identificado", cor:"var(--c6)", tip:TIP.resid }
+];
+const G0 = () => ({ A:0, real:0, bruto:0, ir:0, apost:0, rep:0, cust:0, clubes:0, resid:0 });
+function somaG(a, b){ for(const k in a) a[k] += b[k]; return a; }
+
+// l: dados da loteria; r: linha de resumo (ano ou mês). A = arrecadação real da Caixa; onde falta, estimada pelo
+// prêmio ÷ razão prêmio/arrecadação observada nessa loteria. A base corrigida usa o fator Selic médio da linha.
+function grupos(l, r, suf){
+  const sp = splitDe(l.slug), nomB = r.bruto_nominal || 0, arr = r.arrecadado || 0;
+  const Anom = arr + Math.max(0, nomB - (r.bruto_com_arrec || 0)) / l.ratio;
+  const fator = nomB > 0 ? (r.bruto_corrigido || 0) / nomB : 1;
+  const A = suf === "_corrigido" ? Anom * fator : Anom;
+  const bruto = r["bruto"+suf] || 0, ir = r["ir"+suf] || 0;
+  const rep = A*sp.rep/100, cust = A*sp.cust/100, clubes = A*sp.clubes/100;
+  return { A, real: suf === "_corrigido" ? arr*fator : arr, bruto, ir, apost: Math.max(0, bruto-ir), rep, cust, clubes,
+           resid: Math.max(0, A - (bruto + rep + cust + clubes)) };
+}
+const pctDe = (v, A) => A > 0 ? v/A*100 : 0;
+
 function render(){
   if(!state.d) return;
   const d = state.d, suf = sufixo(), chave = state.per==="ano" ? "ano" : "mes";
+  const unid = state.per==="ano" ? "Ano" : "Mês";
+  const rotulo = state.base==="corrigido" ? "corrigido pela Selic" : "nominal";
   const resumo = filtrarPorAnoEERA(state.per==="ano" ? d.ano : d.mes);
 
-  const soma = (k) => resumo.reduce((a,b)=>a+(b[k]||0),0);
-  const brutoSum = soma("bruto"+suf), irSum = soma("ir"+suf), brutoNominal = soma("bruto_nominal"), irNominal = soma("ir_nominal");
-  const concursosN = soma("concursos");
-  const rotulo = state.base==="corrigido" ? "corrigido pela Selic" : "nominal";
+  // grupos por período (somando as loterias selecionadas) e total
+  const porPer = new Map(), T = G0(); let concursosN = 0;
+  for(const l of state.dados){
+    for(const r of filtrarPorAnoEERA(state.per==="ano" ? l.ano : l.mes)){
+      const g = grupos(l, r, suf), k = String(r[chave]);
+      porPer.set(k, somaG(porPer.get(k) || G0(), g)); somaG(T, g); concursosN += r.concursos || 0;
+    }
+  }
+  const periodos = resumo.map(r => String(r[chave]));
+  const S = SERIES_G.filter(s => T[s.k] > 0);
+  const gov = T.ir + T.rep;
 
-  // Card de resumo em linguagem natural
+  // Resumo em linguagem natural + barra "a cada R$ 100"
   const anos = resumo.map(r => parseInt(r[chave]));
   const a0 = anos.length ? Math.min(...anos) : null, a1 = anos.length ? Math.max(...anos) : null;
   const nomes = state.dados.map(x => x.meta.nome), nl = nomes.length;
   const lista = nl === 1 ? `a loteria ${nomes[0]}` : nl <= 3 ? `as ${nl} loterias selecionadas (${nomes.slice(0,-1).join(", ")} e ${nomes[nl-1]})` : `as ${nl} loterias selecionadas`;
-  $("#resumo").innerHTML = anos.length
-    ? `No período selecionado (${a0===a1 ? a0 : a0+"–"+a1}), ${lista} ${nl===1?"distribuiu":"distribuíram"} <b>${compact(brutoSum)}</b> em prêmios brutos (${rotulo}) em ${concursosN.toLocaleString("pt-BR")} concursos e ${nl===1?"gerou":"geraram"} <b>${compact(irSum)}</b> em IRRF para a União.`
-    : `Nenhum concurso no período e nas loterias selecionados.`;
+  if(!anos.length || T.A <= 0){ $("#resumo").innerHTML = "Nenhum concurso no período e nas loterias selecionados."; }
+  else {
+    $("#resumo").innerHTML = `No período selecionado (${a0===a1 ? a0 : a0+"–"+a1}), ${lista} ${nl===1?"arrecadou":"arrecadaram"} cerca de <b>${compact(T.A)}</b> (${rotulo}). Desse total, os <b>apostadores receberam ${compact(T.apost)} (${pctStr(pctDe(T.apost,T.A))})</b> em prêmios líquidos e o <b>governo ficou com ${compact(gov)} (${pctStr(pctDe(gov,T.A))})</b>, sendo ${compact(T.ir)} de IRRF e ${compact(T.rep)} de repasses sociais. A operação da Caixa custou ${compact(T.cust)} (${pctStr(pctDe(T.cust,T.A))}).`
+      + (T.resid > 0 ? ` Outros ${compact(T.resid)} (${pctStr(pctDe(T.resid,T.A))}) não têm destino identificado.` : "")
+      + `<div class="r100" id="r100" role="img" aria-label="Divisão de cada R$ 100 arrecadados"></div><div class="legend" id="l-r100"></div>`;
+    const bar = $("#r100");
+    S.forEach(s => { const pc = pctDe(T[s.k], T.A), seg = document.createElement("div");
+      seg.style.cssText = `flex:${pc} 1 0;background:${s.cor}`; seg.textContent = pc >= 6 ? "R$ " + num(pc,0) : "";
+      bindTip(seg, `${s.nome} — R$ ${num(pc,2)} de cada R$ 100 arrecadados (${compact(T[s.k])})\n${s.tip}`); bar.appendChild(seg); });
+    legend($("#l-r100"), S.map(s => ({ nome:`${s.nome}: R$ ${num(pctDe(T[s.k],T.A),1)}`, cor:s.cor, tip:s.tip })));
+  }
 
+  const realPct = T.A > 0 ? T.real/T.A*100 : 0;
   $("#kpis").innerHTML = [
-    ["Prêmios Brutos Pagos", compact(brutoSum), "Valor Nominal: " + compact(brutoNominal), "Total pago nas faixas"],
-    ["IRRF Arrecadado (União)", compact(irSum), "Valor Nominal: " + compact(irNominal), "Imposto de Renda retido"],
-    ["Alíquota Efetiva de IR", (brutoSum? irSum/brutoSum*100:0).toFixed(1)+"%", "IRRF ÷ Prêmios Brutos", "Percentual sobre o prêmio"],
-    ["Concursos Analisados", concursosN.toLocaleString("pt-BR"), "Loterias: " + nomes.join(", "), ""],
-  ].map(([l,v,sub,t])=>`
-    <div class="card kpi"><div class="l" title="${t}">${l}</div><div class="v">${v}</div><div class="v-sub">${sub}</div></div>`).join("");
+    ["Arrecadação estimada", compact(T.A), `${pctStr(realPct)} informada pela Caixa, o resto estimado`, "Soma de tudo que foi apostado"],
+    ["Ficou com os apostadores", compact(T.apost), `${pctStr(pctDe(T.apost,T.A))} da arrecadação · bruto ${compact(T.bruto)}`, "Prêmio bruto menos IRRF"],
+    ["Foi para o governo", compact(gov), `${pctStr(pctDe(gov,T.A))} · IRRF ${compact(T.ir)} + repasses ${compact(T.rep)}`, "IRRF mais repasses sociais"],
+    ["Operação da Caixa", compact(T.cust), `${pctStr(pctDe(T.cust,T.A))} da arrecadação (custeio)`, "Custeio e manutenção do serviço"],
+    ["Concursos analisados", concursosN.toLocaleString("pt-BR"), "Loterias: " + nomes.join(", "), ""],
+  ].map(([l,v,sub,t],i)=>`
+    <div class="card kpi k${i}"><div class="l" title="${t}">${l}</div><div class="v">${v}</div><div class="v-sub">${sub}</div></div>`).join("");
 
+  // Rosca: composição do total
+  donutChart($("#c-donut"), S.map(s => ({ nome:s.nome, val:T[s.k], cor:s.cor, tip:s.tip })));
+  legend($("#l-donut"), S.map(s => ({ nome:`${s.nome} (${pctStr(pctDe(T[s.k],T.A))})`, cor:s.cor, tip:s.tip })));
+
+  // Barras 100% e em valores, por período
+  const nomeS = S.map(s => ({ nome:s.nome, cor:s.cor }));
+  const rows100 = periodos.map(k => { const g = porPer.get(k) || G0();
+    return { label:k, valores:S.map(s => pctDe(g[s.k], g.A)), abs:S.map(s => g[s.k]) }; });
+  $("#t0").textContent = `Para onde vai cada R$ 100 arrecadados, por ${unid.toLowerCase()} (${rotulo})`;
+  barChart($("#c0"), rows100, nomeS, { max:100, fmt:v => num(v,0)+"%", fmtTip:(v,r,k) => `${num(v,1)}% (${compact(r.abs[k])})` });
+  legend($("#l0"), S.map(s => ({ nome:s.nome, cor:s.cor, tip:s.tip })));
+
+  $("#tv").textContent = `Valores por destino, por ${unid.toLowerCase()} (${rotulo})`;
+  barChart($("#cv"), periodos.map(k => { const g = porPer.get(k) || G0(); return { label:k, valores:S.map(s => g[s.k]) }; }), nomeS);
+  legend($("#lv"), S.map(s => ({ nome:s.nome, cor:s.cor, tip:s.tip })));
+
+  // Prêmios por modalidade (com marcadores de concursos especiais) e IR — detalhes
   const marcas = montarMarcas(suf, chave);
-  const unid = state.per==="ano" ? "Ano" : "Mês";
-
-  $("#t1").textContent = `IR Arrecadado por ${unid} (${rotulo})`;
+  $("#t1").textContent = `IR arrecadado por ${unid} (${rotulo})`;
   barChart($("#c1"), resumo.map(r=>({label:String(r[chave]), valores:[r["ir"+suf]||0]})), [{nome:"IR Arrecadado", cor:"var(--accent-2)"}], {marcas});
-
-  // Prêmios: uma série por loteria quando há mais de uma selecionada
   const multi = state.dados.length > 1;
   $("#sModo").hidden = !multi;
   let series, rows;
@@ -396,11 +460,11 @@ function render(){
     series = state.dados.map(x => ({ nome:x.meta.nome, cor:corLot(x.slug) }));
     const idx = state.dados.map(x => new Map((state.per==="ano" ? x.ano : x.mes).map(r => [String(r[chave]), r])));
     rows = resumo.map(r => ({ label:String(r[chave]), valores: idx.map(m => (m.get(String(r[chave]))?.["bruto"+suf]) || 0) }));
-    $("#t2").textContent = `Prêmios Brutos Pagos por Modalidade e ${unid} (${rotulo})`;
+    $("#t2").textContent = `Prêmios brutos pagos por modalidade e ${unid.toLowerCase()} (${rotulo})`;
   } else {
     series = [{ nome:"Bruto Pago", cor:"var(--c1)" }];
     rows = resumo.map(r => ({ label:String(r[chave]), valores:[r["bruto"+suf]||0] }));
-    $("#t2").textContent = `Prêmios Brutos Pagos por ${unid} (${rotulo})`;
+    $("#t2").textContent = `Prêmios brutos pagos por ${unid.toLowerCase()} (${rotulo})`;
   }
   barChart($("#c2"), rows, series, { modo: state.modo, marcas });
   legend($("#l2"), multi ? series : []);
@@ -408,30 +472,19 @@ function render(){
   const exp = Object.values(ESPECIAIS).filter(e => usados.has(e.sym) && state.dados.some(x => ESPECIAIS[x.slug] === e)).map(e => `<b>${e.sym}</b> ${e.nome}`);
   $("#l-marcas").innerHTML = exp.length ? `Marcadores de concursos especiais (pico ≥ 2× a mediana do ano): ${exp.join(" · ")}` : "";
 
-  // Rosca: arrecadação estimada a partir do prêmio bruto e dos percentuais da Lei 13.756/2018 (somam 100%)
-  const arrecEst = brutoSum / (LEI.premiosEIR/100);
-  const fatias = [
-    { nome:"Prêmios Líquidos", val:Math.max(0, brutoSum - irSum), cor:"var(--c1)", tip:TIP_DONUT.liquidos },
-    { nome:"Repasses Sociais", val:arrecEst*LEI.repasses/100, cor:"var(--c3)", tip:TIP_DONUT.repasses },
-    { nome:"IRRF (União)", val:irSum, cor:"var(--c2)", tip:TIP_DONUT.ir },
-    { nome:"Custeio do Agente Operador", val:arrecEst*LEI.custeio/100, cor:"var(--c5)", tip:TIP_DONUT.custeio }
-  ];
-  donutChart($("#c-donut"), fatias);
-  const totalFatias = fatias.reduce((a,f)=>a+f.val,0);
-  legend($("#l-donut"), fatias.map(f => ({ nome:`${f.nome} (${pctStr(totalFatias ? f.val/totalFatias*100 : 0)})`, cor:f.cor, tip:f.tip })));
+  // Tabelas
+  const cel = (v, A) => `${compact(v)} <span class="sub">(${pctStr(pctDe(v,A))})</span>`;
+  $("#tp-h").innerHTML = `<tr><th>${unid}</th><th>Concursos</th><th>Arrecadação (est.)</th><th>Apostadores</th><th>Governo</th><th>Operação</th></tr>`;
+  $("#tp-b").innerHTML = [...resumo].reverse().map(r => { const g = porPer.get(String(r[chave])) || G0();
+    return `<tr><td>${r[chave]}</td><td>${r.concursos||0}</td><td>${compact(g.A)}</td><td>${cel(g.apost,g.A)}</td><td>${cel(g.ir+g.rep,g.A)}</td><td>${cel(g.cust,g.A)}</td></tr>`; }).join("");
 
-  $("#tp-h").innerHTML = `<tr><th>${unid}</th><th>Concursos</th><th>Bruto Pago (${state.base})</th><th>IR Arrecadado (${state.base})</th><th>Alíq. IR</th></tr>`;
-  $("#tp-b").innerHTML = [...resumo].reverse().map(r=>{
-    const b=r["bruto"+suf]||0, i=r["ir"+suf]||0;
-    return `<tr><td>${r[chave]}</td><td>${r.concursos||0}</td><td>${brl(b)}</td><td>${brl(i)}</td><td>${b?(i/b*100).toFixed(1):"0.0"}%</td></tr>`; }).join("");
-
-  $("#tl-b").innerHTML = d.porLoteria.map(l => {
-    const rows = filtrarPorAnoEERA(l.ano);
-    const b = rows.reduce((a,r)=>a+(r["bruto"+suf]||0),0), i = rows.reduce((a,r)=>a+(r["ir"+suf]||0),0);
-    return {slug:l.slug, nome:l.nome, c:rows.reduce((a,r)=>a+(r.concursos||0),0), b, i};
-  }).filter(l => l.c > 0).sort((a,b)=>b.b-a.b).map(l =>
-    `<tr><td>${badge(l.slug,l.nome)}</td><td>${l.c.toLocaleString("pt-BR")}</td><td>${brl(l.b)}</td><td>${brl(l.i)}</td><td>${l.b?(l.i/l.b*100).toFixed(1):"0.0"}%</td></tr>`).join("")
-    || `<tr><td colspan="5" class="empty">Sem dados no período</td></tr>`;
+  $("#tl-b").innerHTML = state.dados.map(l => {
+    const g = G0(); let c = 0;
+    for(const r of filtrarPorAnoEERA(l.ano)){ somaG(g, grupos(l, r, suf)); c += r.concursos || 0; }
+    return {slug:l.slug, nome:l.meta.nome, c, g};
+  }).filter(l => l.c > 0).sort((a,b)=>b.g.A-a.g.A).map(({slug,nome,c,g}) =>
+    `<tr><td>${badge(slug,nome)}</td><td>${c.toLocaleString("pt-BR")}</td><td>${compact(g.A)}</td><td>${cel(g.apost,g.A)}</td><td>${cel(g.ir+g.rep,g.A)}</td><td>${cel(g.cust+g.clubes,g.A)}</td><td>${cel(g.resid,g.A)}</td></tr>`).join("")
+    || `<tr><td colspan="7" class="empty">Sem dados no período</td></tr>`;
 
   renderConcursos();
   renderSim();
@@ -494,19 +547,27 @@ function esqueleto(){
 
     <div class="grid">
       <div class="card">
-        <h2>Distribuição Estimada da Arrecadação</h2>
+        <h2>Composição do total arrecadado</h2>
         <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
         <div class="legend" id="l-donut" style="justify-content:center"></div>
-        <p class="note">Passe o mouse (ou toque) nas fatias para ver a base legal. Estimativa: a arrecadação é o prêmio bruto ÷ 43,79% e os demais percentuais vêm da Lei 13.756/2018, art. 16, II (loteria de prognósticos numéricos, vigente desde 2019; somam 100%). Foi aplicada a todo o histórico e a todas as loterias, então é ilustrativa: antes de 2019 e em outras modalidades a divisão era diferente. A lei foi alterada depois; confira o texto vigente.</p>
+        <p class="note"><b>Como é calculado.</b> A arrecadação é a informada pela Caixa por concurso (disponível em geral desde 2010); onde falta, é estimada pelo prêmio dividido pela razão prêmio/arrecadação que cada loteria teve nos concursos com dado. Apostadores = prêmio bruto informado menos o IRRF. Repasses sociais e custeio aplicam a tabela atual da Caixa (Mega-Sena) a todo o histórico e a todas as loterias, exceto a Timemania (Lei 11.345/2006); antes de 2019 a divisão legal era outra e não consegui verificá-la. Passe o mouse ou toque nos itens para ver a base de cada um.</p>
+        <p class="note"><b>Diferença sem destino identificado.</b> Os prêmios informados somam ~33% da arrecadação na Mega-Sena e na Quina, contra 43,35% na tabela da Caixa. A lacuna é parecida com a parcela do IR, o que sugere que o valor que a Caixa informa já vem líquido do imposto. Se for isso, o IR mostrado aqui está subestimado e a fatia dos apostadores já seria o valor final. Ainda não confirmei.</p>
       </div>
 
-      <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
+      <div class="card"><h2 id="t0"></h2><div id="c0"></div><div class="legend" id="l0"></div>
+        <p class="note">Repasses sociais e custeio são percentuais fixos da tabela legal; por isso essas faixas não variam entre os anos. Só o que muda é a divisão do restante entre apostadores, IRRF e diferença sem destino, que vem dos dados da Caixa.</p></div>
+      <div class="card"><h2 id="tv"></h2><div id="cv"></div><div class="legend" id="lv"></div></div>
+
+      <div class="card"><h2>Totais por Loteria <span class="sub">(respeita o filtro de período)</span></h2>
+        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Arrecadação (est.)</th><th>Apostadores</th><th>Governo</th><th>Operação</th><th>Sem destino</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
+
       <div class="card">
         <div class="cardhead"><h2 id="t2"></h2>
           ${segHTML("sModo", [["stack","Empilhado"],["group","Agrupado"]], state.modo)}</div>
         <div id="c2"></div><div class="legend" id="l2"></div>
         <p class="note" id="l-marcas"></p>
       </div>
+      <div class="card"><h2 id="t1"></h2><div id="c1"></div></div>
 
       <div class="card">
         <h2>Poder de Compra em Salários Mínimos</h2>
@@ -519,8 +580,6 @@ function esqueleto(){
         <p class="note">Corrige pela Selic (só Selic, sem IPCA) com o fator médio dos concursos do mês das loterias selecionadas, ponderado pelos prêmios; é uma aproximação, não a data exata de um sorteio. Salário mínimo nacional vigente no mês, conforme tabela de <a href="https://www.contabeis.com.br/tabelas/salario-minimo/" target="_blank" rel="noopener">contabeis.com.br</a> (o valor de 2026 não foi conferido no decreto).</p>
       </div>
 
-      <div class="card"><h2>Totais por Loteria <span class="sub">(respeita o filtro de período)</span></h2>
-        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Bruto Pago</th><th>IR Arrecadado</th><th>Alíq. IR</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
       <div class="card"><h2>Resumo por Período</h2><div class="scroll"><table><thead id="tp-h"></thead><tbody id="tp-b"></tbody></table></div></div>
       <div class="card"><h2>Concursos <span class="sub">(últimos 200 / busca por nº, data ou loteria)</span></h2>
         <p style="margin:0 0 8px"><input type="search" id="busca" placeholder="Buscar concurso, data ou loteria…"></p>
@@ -547,7 +606,9 @@ function carregarLoteria(slug){
         const [meta, ano, mes, concursos] = await Promise.all(
           ["meta","resumo_ano","resumo_mes","concursos"].map(n => getJSON(`${b}${slug}/${n}.json`)));
         state.basePath = b;
-        return { slug, meta, ano: ano||[], mes: mes||[], concursos: concursos||[] };
+        // razão prêmio ÷ arrecadação nos concursos em que a Caixa informa a arrecadação (usada para estimar os demais)
+        const sa = (ano||[]).reduce((s,r) => s + (r.arrecadado||0), 0), sb = (ano||[]).reduce((s,r) => s + (r.bruto_com_arrec||0), 0);
+        return { slug, meta, ano: ano||[], mes: mes||[], concursos: concursos||[], ratio: sa > 0 && sb > 0 ? sb/sa : 0.33 };
       }catch(e){}
     }
     throw new Error("sem dados: " + slug);
@@ -557,7 +618,7 @@ function carregarLoteria(slug){
   return p;
 }
 
-const SOMAS = ["concursos","bruto_corrigido","bruto_nominal","ir_corrigido","ir_nominal"];
+const SOMAS = ["concursos","bruto_corrigido","bruto_nominal","ir_corrigido","ir_nominal","arrecadado","bruto_com_arrec"];
 function agrega(dados, campo, chave){
   const mapa = {};
   for(const d of dados) for(const r of d[campo]){

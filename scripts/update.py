@@ -236,7 +236,8 @@ def tabela_faixas(raw, hoje, cfg=None):
             linhas.append({"concurso": c["numero"], "data": pd.Timestamp(c["data"]),
                            "faixa": f["faixa"], "descricao": f["descricao"],
                            "ganhadores": f["ganhadores"],
-                           "premio_por_ganhador": f["premio"] / conv})
+                           "premio_por_ganhador": f["premio"] / conv,
+                           "arrecadado": c.get("arrecadado", 0.0) / conv})
     df = pd.DataFrame(linhas)
     if df.empty:
         return df
@@ -307,10 +308,15 @@ def calcular(raw, selic, regras, hoje, cfg=None):
     f["ir_corrigido"] = f["ir_nominal"] * f["fator_selic"]
     f = f.sort_values(["concurso", "faixa"]).reset_index(drop=True)
 
-    pc = f.groupby(["concurso", "data"], as_index=False)[VALORES].sum()
+    pc = f.groupby(["concurso", "data"], as_index=False).agg(
+        **{c: (c, "sum") for c in VALORES}, arrecadado=("arrecadado", "first"))
+    # arrecadacao informada pela Caixa (falta em concursos antigos) e o premio dos mesmos concursos,
+    # para o dashboard estimar a razao premio/arrecadacao onde ela e conhecida
+    pc["bruto_com_arrec"] = np.where(pc["arrecadado"] > 0, pc["bruto_nominal"], 0.0)
     pc["ano"] = pc["data"].dt.year
     pc["mes"] = pc["data"].dt.strftime("%Y-%m")
-    agg = {"concursos": ("concurso", "count"), **{c: (c, "sum") for c in VALORES}}
+    agg = {"concursos": ("concurso", "count"), **{c: (c, "sum") for c in VALORES},
+           "arrecadado": ("arrecadado", "sum"), "bruto_com_arrec": ("bruto_com_arrec", "sum")}
     por_ano = pc.groupby("ano", as_index=False).agg(**agg)
     por_mes = pc.groupby("mes", as_index=False).agg(**agg)
 
