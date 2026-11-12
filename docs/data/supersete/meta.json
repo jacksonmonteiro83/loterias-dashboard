@@ -1,18 +1,18 @@
 {
   "loteria": "supersete",
   "nome": "Super Sete",
-  "atualizado_em": "2026-11-12T10:29:15-03:00",
+  "atualizado_em": "2026-11-12T11:01:14-03:00",
   "data_corrente": "2026-11-12",
-  "concursos": 200,
-  "ultimo_concurso": 200,
-  "data_ultimo_concurso": "2022-01-26",
+  "concursos": 921,
+  "ultimo_concurso": 921,
+  "data_ultimo_concurso": "2026-11-11",
   "selic_ate": "2026-11-11",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
-    "bruto_nominal": 79342195.14,
-    "bruto_corrigido": 147737655.55,
-    "ir_nominal": 12496145.74,
-    "ir_corrigido": 23242664.08
+    "bruto_nominal": 275605807.96,
+    "bruto_corrigido": 412774800.41,
+    "ir_nominal": 43384576.2,
+    "ir_corrigido": 64693958.78
   }
 }
