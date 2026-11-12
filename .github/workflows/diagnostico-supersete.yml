@@ -1,0 +1,33 @@
+name: Diagnostico Super Sete (temporario)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tentar baixar a planilha de resultados
+        run: |
+          mkdir -p out
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+          i=0
+          for u in \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Super+Sete" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Super%20Sete" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/super-sete" ; do
+            i=$((i+1))
+            echo "== $u"
+            curl -sS -L -m 120 -A "$UA" -H "Referer: https://loterias.caixa.gov.br/" -o "out/r$i.bin" \
+              -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$u" || echo "falhou"
+            head -c 300 "out/r$i.bin" | strings | head -3
+          done
+          echo "== pagina"; curl -sS -L -m 60 -A "$UA" "https://loterias.caixa.gov.br/Paginas/Super-sete.aspx" -o out/pagina.html -w "http=%{http_code} bytes=%{size_download}\n"
+          grep -io 'href="[^"]*\(download\|xlsx\|resultados\)[^"]*"' out/pagina.html | head -20 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supersete-diagnostico
+          path: out/
+          retention-days: 3
