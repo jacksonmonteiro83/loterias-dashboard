@@ -6,18 +6,14 @@ jobs:
   testar:
     runs-on: ubuntu-latest
     steps:
-      - name: Ler o JS do botao de download
+      - name: Testar variantes do parametro modalidade
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
-          B="https://loterias.caixa.gov.br"
-          curl -sS -L -m 60 -A "$UA" "$B/style%20library/js/webparts/download-resultados.js" -o dl.js -w "http=%{http_code} bytes=%{size_download}\n"
-          echo "==== download-resultados.js"; head -c 6000 dl.js
-          echo; echo "==== candidatos"
-          for u in \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete/download-resultados" \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/download-resultados?modalidade=supersete" \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download-resultados?modalidade=supersete" ; do
-            echo "== $u"
-            curl -sS -L -m 90 -A "$UA" -o x.bin -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$u" || echo falhou
-            head -c 300 x.bin | strings | head -3
+          A="https://servicebus2.caixa.gov.br/portaldeloterias"
+          t() { echo "== $1"; curl -sS -L -m 120 -A "$UA" -H "Referer: https://loterias.caixa.gov.br/" -o x.bin -D h.txt -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$1" || echo falhou; grep -i 'content-disposition' h.txt; head -c 400 x.bin | strings | head -4; }
+          t "$A/api/loterias/textos-download-resultados?modalidade=Super%207"
+          for m in "Super%207" "Super%20Sete" "SuperSete" "supersete" "Super-Sete" "SUPER_SETE" "Mega-Sena" "Mega%20Sena" "Lotofácil"; do
+            t "$A/api/resultados/download?modalidade=$m"
           done
+          echo "== parametro de URL da API usada pela pagina"
+          curl -sS -m 60 -A "$UA" "https://loterias.caixa.gov.br/style%20library/js/loterias-caixa.js" -o lc.js; grep -n -i 'parametroUrlApi\|servicebus\|obterParametro' lc.js | cut -c1-240 | head -15
