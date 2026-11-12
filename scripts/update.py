@@ -39,11 +39,11 @@ LOTERIAS = {
     "duplasena":      {"nome": "Dupla Sena",    "primeiro_concurso": date(2001, 11, 6)},
     "timemania":      {"nome": "Timemania",     "primeiro_concurso": date(2008, 3, 1)},
     "diadesorte":     {"nome": "Dia de Sorte",  "primeiro_concurso": date(2018, 5, 19)},
-    # Desligada: o backend da Caixa para /supersete esta quebrado (HTTP 500, "404 Not Found" do
-    # SharePoint interno), para qualquer cliente. Religar com True quando a URL
-    # https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete voltar a responder JSON.
+    # Super Sete: o servidor servicebus2 da Caixa devolve HTTP 500 para /supersete, mas o servicebus3
+    # (o mesmo que a pagina da Caixa usa, vide https://loterias.caixa.gov.br/Style%20Library/json/params.txt)
+    # responde normalmente. Por isso "api" aponta para ele.
     "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2),
-                       "ativa": False},
+                       "api": "https://servicebus3.caixa.gov.br/portaldeloterias/api"},
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
 }
 # Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos ate `cruzeiro_real_ate`.
@@ -52,6 +52,12 @@ LOTERIAS = {
 CRUZEIRO_REAL_POR_REAL = 2750.0
 
 CAIXA = "https://servicebus2.caixa.gov.br/portaldeloterias/api"
+
+
+def base_api(slug):
+    return LOTERIAS.get(slug, {}).get("api", CAIXA)
+
+
 SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados"
 HEADERS = {"User-Agent": "Mozilla/5.0 (historico-loterias)", "Accept": "application/json"}
 REBAIXAR_ULTIMOS = 3   # rebaixa os ultimos N concursos a cada rodada (pega correcoes)
@@ -81,7 +87,7 @@ def _get_json(url, tentativas=5):
 
 def _existe(slug, n):
     try:
-        c = _get_json(f"{CAIXA}/{slug}/{n}", tentativas=2)
+        c = _get_json(f"{base_api(slug)}/{slug}/{n}", tentativas=2)
     except RuntimeError:
         return False
     return isinstance(c, dict) and "numero" in c
@@ -105,7 +111,7 @@ def ultimo_por_sondagem(slug):
 
 def fetch_ultimo(slug):
     try:
-        res = _get_json(f"{CAIXA}/{slug}")
+        res = _get_json(f"{base_api(slug)}/{slug}")
         if isinstance(res, dict) and "numero" in res:
             return int(res["numero"])
     except RuntimeError as e:
@@ -114,7 +120,7 @@ def fetch_ultimo(slug):
 
 
 def fetch_concurso(slug, n):
-    return _get_json(f"{CAIXA}/{slug}/{n}")
+    return _get_json(f"{base_api(slug)}/{slug}/{n}")
 
 
 def fetch_selic(ini, fim):

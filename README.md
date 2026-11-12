@@ -2,7 +2,7 @@
 
 Dashboard estático (GitHub Pages) com, para cada loteria da Caixa, os prêmios brutos pagos por faixa,
 corrigidos pela Selic até hoje, o IR arrecadado e os totais por mês e por ano.
-Loterias: Mega-Sena, Lotofácil, Quina, Lotomania, Dupla Sena, Timemania, Dia de Sorte e +Milionária (Super Sete desligada, veja abaixo).
+Loterias: Mega-Sena, Lotofácil, Quina, Lotomania, Dupla Sena, Timemania, Dia de Sorte, Super Sete e +Milionária.
 Atualiza sozinho todo dia à meia-noite (Brasília).
 
 ## Como funciona
@@ -60,10 +60,7 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
   altera a primeira faixa, o redutor até R$ 5.000 é separado). O texto da lei não foi lido diretamente.
 - **Dupla Sena:** os concursos recentes trazem 8 faixas (os dois sorteios), mas alguns períodos antigos
   trazem 4 ou 6; conferir se o histórico antigo está completo.
-- **Super Sete (desligada):** o servidor da Caixa está quebrado para essa loteria. `/supersete` responde
-  HTTP 500 com "404 Not Found" vindo do SharePoint interno da Caixa, para qualquer cliente (testado de dentro
-  do GitHub Actions e no navegador). Os espelhos públicos achados só trazem as dezenas, sem prêmios por faixa.
-  Quando a Caixa consertar, troque para `"ativa": True` em `LOTERIAS` e rode o workflow.
+- **Super Sete:** o servidor `servicebus2` da Caixa responde HTTP 500 para ela, mas o `servicebus3` (o que a própria página usa, via `Style Library/json/params.txt`) funciona; a loteria usa esse endereço (campo `api` em `LOTERIAS`).
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
 - **Quem fica com cada real arrecadado:** o painel divide a arrecadação em Apostadores (prêmio bruto menos IRRF), Governo (IRRF + repasses
   sociais), Operação (custeio da Caixa) e Clubes (só Timemania). A diferença entre a arrecadação e o que foi contabilizado é somada ao IR (hipótese, abaixo). A arrecadação é a informada
