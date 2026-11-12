@@ -10,7 +10,7 @@ jobs:
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
           A="https://servicebus2.caixa.gov.br/portaldeloterias"
-          t() { echo "== $1"; curl -sS -L -m 120 -A "$UA" -H "Referer: https://loterias.caixa.gov.br/" -o x.bin -D h.txt -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$1" || echo falhou; grep -i 'content-disposition' h.txt; head -c 400 x.bin | strings | head -4; }
+          t() { echo "== $1"; curl -sS -L -m 120 -A "$UA" -H "Referer: https://loterias.caixa.gov.br/" -o x.bin -D h.txt -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$1" || echo falhou; grep -i 'content-disposition' h.txt || true; head -c 400 x.bin | strings | head -4; }
           t "$A/api/loterias/textos-download-resultados?modalidade=Super%207"
           for m in "Super%207" "Super%20Sete" "SuperSete" "supersete" "Super-Sete" "SUPER_SETE" "Mega-Sena" "Mega%20Sena" "Lotofácil"; do
             t "$A/api/resultados/download?modalidade=$m"
