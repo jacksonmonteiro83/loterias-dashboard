@@ -44,7 +44,7 @@ LOTERIAS = {
     # responde normalmente. Por isso "api" aponta para ele.
     "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2),
                        "api": "https://servicebus3.caixa.gov.br/portaldeloterias/api",
-                       "workers": 1},     # o servicebus3 limita requisicoes (HTTP 429)
+                       "workers": 1, "pausa": 0.8},     # o servicebus3 limita requisicoes (HTTP 429)
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
 }
 # Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos ate `cruzeiro_real_ate`.
@@ -80,7 +80,7 @@ def _get_json(url, tentativas=8):
             if r.status_code == 404:
                 return None
             ultimo_erro = f"HTTP {r.status_code}"
-            if r.status_code == 429:      # limite de requisicoes: espera mais (respeita Retry-After)
+            if r.status_code in (403, 429):      # limite de requisicoes: espera mais (respeita Retry-After)
                 try:
                     espera = float(r.headers.get("Retry-After", ""))
                 except ValueError:
@@ -195,6 +195,7 @@ def atualizar_raw(slug, raw_dir):
 
     def baixa(n):
         c = fetch_concurso(slug, n)
+        time.sleep(LOTERIAS.get(slug, {}).get("pausa", 0))
         if c is None:
             raise RuntimeError(f"Concurso {n} de {slug} nao encontrado")
         return enxugar(c)
