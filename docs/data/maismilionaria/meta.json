@@ -1,18 +1,18 @@
 {
   "loteria": "maismilionaria",
   "nome": "+Milionária",
-  "atualizado_em": "2026-11-11T22:24:13-03:00",
-  "data_corrente": "2026-11-10",
-  "concursos": 405,
-  "ultimo_concurso": 405,
-  "data_ultimo_concurso": "2026-11-06",
-  "selic_ate": "2026-11-10",
+  "atualizado_em": "2026-11-12T07:48:42-03:00",
+  "data_corrente": "2026-11-12",
+  "concursos": 406,
+  "ultimo_concurso": 406,
+  "data_ultimo_concurso": "2026-11-11",
+  "selic_ate": "2026-11-11",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
-    "bruto_nominal": 1257958876.32,
-    "bruto_corrigido": 1619480704.84,
-    "ir_nominal": 180065215.85,
-    "ir_corrigido": 229601894.72
+    "bruto_nominal": 1260752486.98,
+    "bruto_corrigido": 1623096817.36,
+    "ir_nominal": 180246899.87,
+    "ir_corrigido": 229900188.95
   }
 }
