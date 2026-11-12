@@ -66,13 +66,13 @@ O dashboard mostra um aviso amarelo, por loteria e período, enquanto houver lin
   Quando a Caixa consertar, troque para `"ativa": True` em `LOTERIAS` e rode o workflow.
 - **Prêmio apurado, não necessariamente pago:** prêmios não resgatados em 90 dias não são descontados.
 - **Quem fica com cada real arrecadado:** o painel divide a arrecadação em Apostadores (prêmio bruto menos IRRF), Governo (IRRF + repasses
-  sociais), Operação (custeio da Caixa), Clubes (só Timemania) e uma "diferença sem destino identificado". A arrecadação é a informada
+  sociais), Operação (custeio da Caixa) e Clubes (só Timemania). A diferença entre a arrecadação e o que foi contabilizado é somada ao IR (hipótese, abaixo). A arrecadação é a informada
   pela Caixa (`arrecadado` nos resumos; existe em geral desde 2010) e, onde falta, é estimada pelo prêmio ÷ razão prêmio/arrecadação
   da própria loteria. Repasses e custeio usam a tabela atual da Caixa para a Mega-Sena (37,49% e 19,13%) em todo o histórico; a Timemania
   usa a Lei 11.345/2006. A divisão legal anterior a 2019 não foi verificada.
 - **Pendência importante:** nos dados, prêmio pago ÷ arrecadação dá ~33% (Mega-Sena, Quina) contra 43,35% na tabela da Caixa, e a lacuna acompanha
-  a parcela do IR (quadra, que não paga IR, bate exatamente). Isso sugere que `valorPremio` da API já vem líquido de IR. Se for, o IR calculado
-  aqui está subestimado e os apostadores já recebem o valor informado. Falta uma fonte que confirme.
+  a parcela do IR (quadra, que não paga IR, bate exatamente). Isso sugere que `valorPremio` da API já vem líquido de IR. Por isso o painel soma essa diferença ao IR
+  retido na fonte (decisão do usuário). Se a hipótese estiver errada, o IR fica superestimado. Falta uma fonte que confirme.
 - **Simulador (salários mínimos):** fator Selic médio do mês das loterias selecionadas (aproximação); série do salário mínimo de
   contabeis.com.br, não conferida nos decretos (2026 em especial).
 - **Marcadores de concursos especiais:** Virada, São João, Independência e Páscoa são detectados por regra de data + pico (≥ 2× a mediana do ano).

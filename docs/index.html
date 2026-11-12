@@ -171,12 +171,11 @@ const SM_HOJE = SM[SM.length-1];
 const SPLIT = { padrao:{ rep:37.49, cust:19.13, clubes:0 }, timemania:{ rep:12, cust:20, clubes:22 } };
 const splitDe = slug => SPLIT[slug] || SPLIT.padrao;
 const TIP = {
-  apost: "Apostadores\nPrêmio bruto informado pela Caixa menos o IRRF: o que as pessoas de fato recebem.",
-  ir: "IRRF — Imposto de Renda retido na fonte e recolhido à União\n30% por ganhador, tributação exclusiva. Desde 2008, só sobre o que excede a 1ª faixa da tabela mensal do IRPF (Lei 11.941/2009, art. 56); até 2007, sobre o prêmio inteiro acima de R$ 11,10 (RIR/1999, art. 676).",
+  apost: "Apostadores\nPrêmio bruto informado pela Caixa menos o IR calculado: o que as pessoas de fato recebem.",
+  ir: "IR retido na fonte (recolhido à União)\nParte calculada: 30% por ganhador, tributação exclusiva. Desde 2008, só sobre o que excede a 1ª faixa da tabela mensal do IRPF (Lei 11.941/2009, art. 56); até 2007, sobre o prêmio inteiro acima de R$ 11,10 (RIR/1999, art. 676).\nParte estimada: a diferença entre a arrecadação e prêmios + repasses + custeio também foi contabilizada aqui, por hipótese: os prêmios informados somam ~33% da arrecadação, contra 43,35% da tabela da Caixa, e a lacuna acompanha a parcela do IR. Não confirmado.",
   rep: "Repasses sociais (tabela atual da Caixa para a Mega-Sena, % da arrecadação; 37,49% no total):\n• Seguridade Social: 17,32%\n• Segurança Pública (FNSP): 9,26%\n• Cultura (FNC): 2,92%\n• Esporte (Ministério): 2,46%\n• Comitê Olímpico (COB): 1,73%\n• Comitê Paralímpico (CPB): 0,93%\n• Funpen: 1,00%\n• Outras entidades esportivas: 1,00% (CBC, CBDE, CBDU, Fenaclubs)\nO FIES não aparece nessa tabela. Aplicado a todo o histórico como estimativa; antes de 2019 a divisão era outra.",
   cust: "Operação — custeio e manutenção do serviço (Caixa): 19,13% da arrecadação na tabela atual. A Caixa informa ainda 3,11% de comissão às lotéricas; não confirmei se já está dentro desses 19,13%.",
   clubes: "Clubes de futebol (Timemania)\n22% da arrecadação pela Lei 11.345/2006 (texto original): remuneração dos clubes que cedem sua marca.",
-  resid: "Diferença sem destino identificado\nArrecadação menos prêmios, repasses e custeio estimados. Os prêmios informados pela Caixa somam ~33% da arrecadação (Mega-Sena, Quina), abaixo dos 43,35% da lei. A diferença é parecida com a parcela do IR, o que sugere que o valor informado já vem líquido do imposto; também podem entrar prêmios acumulados ou não pagos."
 };
 
 // Concursos especiais: detectados por regra de data + pico (valor ≥ 2× a mediana dos concursos da loteria no ano).
@@ -364,13 +363,12 @@ function badge(slug, nome){ return `<span class="badge" style="--lc:${corLot(slu
 // ---------- Modelo: quem fica com cada real arrecadado ----------
 const SERIES_G = [
   { k:"apost",  nome:"Apostadores (prêmio líquido)", cor:"var(--c1)", tip:TIP.apost },
-  { k:"ir",     nome:"IRRF (União)",                  cor:"var(--c2)", tip:TIP.ir },
+  { k:"ir",     nome:"IR retido na fonte",              cor:"var(--c2)", tip:TIP.ir },
   { k:"rep",    nome:"Repasses sociais",              cor:"var(--c3)", tip:TIP.rep },
   { k:"cust",   nome:"Operação (custeio da Caixa)",   cor:"var(--c5)", tip:TIP.cust },
-  { k:"clubes", nome:"Clubes (Timemania)",            cor:"var(--c4)", tip:TIP.clubes },
-  { k:"resid",  nome:"Diferença sem destino identificado", cor:"var(--c6)", tip:TIP.resid }
+  { k:"clubes", nome:"Clubes (Timemania)",            cor:"var(--c4)", tip:TIP.clubes }
 ];
-const G0 = () => ({ A:0, real:0, bruto:0, ir:0, apost:0, rep:0, cust:0, clubes:0, resid:0 });
+const G0 = () => ({ A:0, real:0, bruto:0, ir:0, irExtra:0, apost:0, rep:0, cust:0, clubes:0 });
 function somaG(a, b){ for(const k in a) a[k] += b[k]; return a; }
 
 // l: dados da loteria; r: linha de resumo (ano ou mês). A = arrecadação real da Caixa; onde falta, estimada pelo
@@ -382,8 +380,9 @@ function grupos(l, r, suf){
   const A = suf === "_corrigido" ? Anom * fator : Anom;
   const bruto = r["bruto"+suf] || 0, ir = r["ir"+suf] || 0;
   const rep = A*sp.rep/100, cust = A*sp.cust/100, clubes = A*sp.clubes/100;
-  return { A, real: suf === "_corrigido" ? arr*fator : arr, bruto, ir, apost: Math.max(0, bruto-ir), rep, cust, clubes,
-           resid: Math.max(0, A - (bruto + rep + cust + clubes)) };
+  const irExtra0 = Math.max(0, A - (bruto + rep + cust + clubes));
+  return { A, real: suf === "_corrigido" ? arr*fator : arr, bruto, ir: ir + irExtra0, apost: Math.max(0, bruto-ir), rep, cust, clubes,
+           irExtra: irExtra0 };
 }
 const pctDe = (v, A) => A > 0 ? v/A*100 : 0;
 
@@ -413,8 +412,8 @@ function render(){
   const lista = nl === 1 ? `a loteria ${nomes[0]}` : nl <= 3 ? `as ${nl} loterias selecionadas (${nomes.slice(0,-1).join(", ")} e ${nomes[nl-1]})` : `as ${nl} loterias selecionadas`;
   if(!anos.length || T.A <= 0){ $("#resumo").innerHTML = "Nenhum concurso no período e nas loterias selecionados."; }
   else {
-    $("#resumo").innerHTML = `No período selecionado (${a0===a1 ? a0 : a0+"–"+a1}), ${lista} ${nl===1?"arrecadou":"arrecadaram"} cerca de <b>${compact(T.A)}</b> (${rotulo}). Desse total, os <b>apostadores receberam ${compact(T.apost)} (${pctStr(pctDe(T.apost,T.A))})</b> em prêmios líquidos e o <b>governo ficou com ${compact(gov)} (${pctStr(pctDe(gov,T.A))})</b>, sendo ${compact(T.ir)} de IRRF e ${compact(T.rep)} de repasses sociais. A operação da Caixa custou ${compact(T.cust)} (${pctStr(pctDe(T.cust,T.A))}).`
-      + (T.resid > 0 ? ` Outros ${compact(T.resid)} (${pctStr(pctDe(T.resid,T.A))}) não têm destino identificado.` : "")
+    $("#resumo").innerHTML = `No período selecionado (${a0===a1 ? a0 : a0+"–"+a1}), ${lista} ${nl===1?"arrecadou":"arrecadaram"} cerca de <b>${compact(T.A)}</b> (${rotulo}). Desse total, os <b>apostadores receberam ${compact(T.apost)} (${pctStr(pctDe(T.apost,T.A))})</b> em prêmios líquidos e o <b>governo ficou com ${compact(gov)} (${pctStr(pctDe(gov,T.A))})</b>, sendo ${compact(T.ir)} de IR retido na fonte e ${compact(T.rep)} de repasses sociais. A operação da Caixa custou ${compact(T.cust)} (${pctStr(pctDe(T.cust,T.A))}).`
+      + (T.irExtra > 0 ? ` O IR inclui ${compact(T.irExtra)} (${pctStr(pctDe(T.irExtra,T.A))}) estimados como a diferença entre a arrecadação e o que foi contabilizado (veja a nota abaixo).` : "")
       + `<div class="r100" id="r100" role="img" aria-label="Divisão de cada R$ 100 arrecadados"></div><div class="legend" id="l-r100"></div>`;
     const bar = $("#r100");
     S.forEach(s => { const pc = pctDe(T[s.k], T.A), seg = document.createElement("div");
@@ -426,8 +425,8 @@ function render(){
   const realPct = T.A > 0 ? T.real/T.A*100 : 0;
   $("#kpis").innerHTML = [
     ["Arrecadação estimada", compact(T.A), `${pctStr(realPct)} informada pela Caixa, o resto estimado`, "Soma de tudo que foi apostado"],
-    ["Ficou com os apostadores", compact(T.apost), `${pctStr(pctDe(T.apost,T.A))} da arrecadação · bruto ${compact(T.bruto)}`, "Prêmio bruto menos IRRF"],
-    ["Foi para o governo", compact(gov), `${pctStr(pctDe(gov,T.A))} · IRRF ${compact(T.ir)} + repasses ${compact(T.rep)}`, "IRRF mais repasses sociais"],
+    ["Ficou com os apostadores", compact(T.apost), `${pctStr(pctDe(T.apost,T.A))} da arrecadação · bruto ${compact(T.bruto)}`, "Prêmio bruto menos IR"],
+    ["Foi para o governo", compact(gov), `${pctStr(pctDe(gov,T.A))} · IR ${compact(T.ir)} + repasses ${compact(T.rep)}`, "IR retido na fonte mais repasses sociais"],
     ["Operação da Caixa", compact(T.cust), `${pctStr(pctDe(T.cust,T.A))} da arrecadação (custeio)`, "Custeio e manutenção do serviço"],
     ["Concursos analisados", concursosN.toLocaleString("pt-BR"), "Loterias: " + nomes.join(", "), ""],
   ].map(([l,v,sub,t],i)=>`
@@ -483,8 +482,8 @@ function render(){
     for(const r of filtrarPorAnoEERA(l.ano)){ somaG(g, grupos(l, r, suf)); c += r.concursos || 0; }
     return {slug:l.slug, nome:l.meta.nome, c, g};
   }).filter(l => l.c > 0).sort((a,b)=>b.g.A-a.g.A).map(({slug,nome,c,g}) =>
-    `<tr><td>${badge(slug,nome)}</td><td>${c.toLocaleString("pt-BR")}</td><td>${compact(g.A)}</td><td>${cel(g.apost,g.A)}</td><td>${cel(g.ir+g.rep,g.A)}</td><td>${cel(g.cust+g.clubes,g.A)}</td><td>${cel(g.resid,g.A)}</td></tr>`).join("")
-    || `<tr><td colspan="7" class="empty">Sem dados no período</td></tr>`;
+    `<tr><td>${badge(slug,nome)}</td><td>${c.toLocaleString("pt-BR")}</td><td>${compact(g.A)}</td><td>${cel(g.apost,g.A)}</td><td>${cel(g.ir+g.rep,g.A)}</td><td>${cel(g.cust+g.clubes,g.A)}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="empty">Sem dados no período</td></tr>`;
 
   renderConcursos();
   renderSim();
@@ -550,16 +549,16 @@ function esqueleto(){
         <h2>Composição do total arrecadado</h2>
         <div id="c-donut" style="display:flex;justify-content:center;margin:10px 0;"></div>
         <div class="legend" id="l-donut" style="justify-content:center"></div>
-        <p class="note"><b>Como é calculado.</b> A arrecadação é a informada pela Caixa por concurso (disponível em geral desde 2010); onde falta, é estimada pelo prêmio dividido pela razão prêmio/arrecadação que cada loteria teve nos concursos com dado. Apostadores = prêmio bruto informado menos o IRRF. Repasses sociais e custeio aplicam a tabela atual da Caixa (Mega-Sena) a todo o histórico e a todas as loterias, exceto a Timemania (Lei 11.345/2006); antes de 2019 a divisão legal era outra e não consegui verificá-la. Passe o mouse ou toque nos itens para ver a base de cada um.</p>
-        <p class="note"><b>Diferença sem destino identificado.</b> Os prêmios informados somam ~33% da arrecadação na Mega-Sena e na Quina, contra 43,35% na tabela da Caixa. A lacuna é parecida com a parcela do IR, o que sugere que o valor que a Caixa informa já vem líquido do imposto. Se for isso, o IR mostrado aqui está subestimado e a fatia dos apostadores já seria o valor final. Ainda não confirmei.</p>
+        <p class="note"><b>Como é calculado.</b> A arrecadação é a informada pela Caixa por concurso (disponível em geral desde 2010); onde falta, é estimada pelo prêmio dividido pela razão prêmio/arrecadação que cada loteria teve nos concursos com dado. Apostadores = prêmio bruto informado menos o IR calculado. Repasses sociais e custeio aplicam a tabela atual da Caixa (Mega-Sena) a todo o histórico e a todas as loterias, exceto a Timemania (Lei 11.345/2006); antes de 2019 a divisão legal era outra e não consegui verificá-la. Passe o mouse ou toque nos itens para ver a base de cada um.</p>
+        <p class="note"><b>O que está dentro do IR.</b> Os prêmios informados pela Caixa somam ~33% da arrecadação na Mega-Sena e na Quina, contra 43,35% na tabela da Caixa. A lacuna é parecida com a parcela do IR, o que sugere que o valor informado já vem líquido do imposto. Por isso o IR mostrado soma o imposto calculado por ganhador e essa diferença (arrecadação menos prêmios, repasses e custeio), tratada como IR retido na fonte. É uma hipótese, ainda não confirmada: se a diferença tiver outra origem (prêmios acumulados, não pagos ou outra regra de divisão), o IR está superestimado.</p>
       </div>
 
       <div class="card"><h2 id="t0"></h2><div id="c0"></div><div class="legend" id="l0"></div>
-        <p class="note">Repasses sociais e custeio são percentuais fixos da tabela legal; por isso essas faixas não variam entre os anos. Só o que muda é a divisão do restante entre apostadores, IRRF e diferença sem destino, que vem dos dados da Caixa.</p></div>
+        <p class="note">Repasses sociais e custeio são percentuais fixos da tabela legal; por isso essas faixas não variam entre os anos. Só o que muda é a divisão do restante entre apostadores e IR, que vem dos dados da Caixa.</p></div>
       <div class="card"><h2 id="tv"></h2><div id="cv"></div><div class="legend" id="lv"></div></div>
 
       <div class="card"><h2>Totais por Loteria <span class="sub">(respeita o filtro de período)</span></h2>
-        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Arrecadação (est.)</th><th>Apostadores</th><th>Governo</th><th>Operação</th><th>Sem destino</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
+        <div class="scroll"><table><thead><tr><th>Loteria</th><th>Concursos</th><th>Arrecadação (est.)</th><th>Apostadores</th><th>Governo</th><th>Operação</th></tr></thead><tbody id="tl-b"></tbody></table></div></div>
 
       <div class="card">
         <div class="cardhead"><h2 id="t2"></h2>
