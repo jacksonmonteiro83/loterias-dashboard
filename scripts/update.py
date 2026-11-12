@@ -43,7 +43,8 @@ LOTERIAS = {
     # (o mesmo que a pagina da Caixa usa, vide https://loterias.caixa.gov.br/Style%20Library/json/params.txt)
     # responde normalmente. Por isso "api" aponta para ele.
     "supersete":      {"nome": "Super Sete",    "primeiro_concurso": date(2020, 10, 2),
-                       "api": "https://servicebus3.caixa.gov.br/portaldeloterias/api"},
+                       "api": "https://servicebus3.caixa.gov.br/portaldeloterias/api",
+                       "workers": 1},     # o servicebus3 limita requisicoes (HTTP 429)
     "maismilionaria": {"nome": "+Milionária",   "primeiro_concurso": date(2022, 5, 28)},
 }
 # Conversao Cruzeiro Real -> Real (1 R$ = 2.750 CR$) para concursos ate `cruzeiro_real_ate`.
@@ -69,7 +70,7 @@ def ativas():
 
 
 # ------------------------------------------------------------------ rede
-def _get_json(url, tentativas=5):
+def _get_json(url, tentativas=8):
     ultimo_erro = None
     for i in range(tentativas):
         try:
@@ -79,6 +80,13 @@ def _get_json(url, tentativas=5):
             if r.status_code == 404:
                 return None
             ultimo_erro = f"HTTP {r.status_code}"
+            if r.status_code == 429:      # limite de requisicoes: espera mais (respeita Retry-After)
+                try:
+                    espera = float(r.headers.get("Retry-After", ""))
+                except ValueError:
+                    espera = min(60, 5 * 2 ** i)
+                time.sleep(min(90, max(espera, 5)))
+                continue
         except (requests.RequestException, ValueError) as e:
             ultimo_erro = str(e)
         time.sleep(2 * (i + 1))
@@ -192,7 +200,7 @@ def atualizar_raw(slug, raw_dir):
         return enxugar(c)
 
     # em blocos, gravando o progresso: se cair no meio, o que ja veio nao se perde
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    with ThreadPoolExecutor(max_workers=LOTERIAS.get(slug, {}).get("workers", 4)) as ex:
         for i in range(0, len(faltam), BLOCO):
             for c in ex.map(baixa, faltam[i:i + BLOCO]):
                 raw[c["numero"]] = c
