@@ -6,9 +6,17 @@ jobs:
   testar:
     runs-on: ubuntu-latest
     steps:
-      - name: Descobrir a URL da API que a pagina usa
+      - name: Ler params.txt e testar a API indicada
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
-          curl -sS -m 60 -A "$UA" "https://loterias.caixa.gov.br/style%20library/js/loterias-caixa.js" -o lc.js
-          sed -n 1,40p lc.js | cut -c1-250
-          echo "==== urls no JS"; grep -o "'[^']*\(_api\|/Paginas\|\.json\|parametro\)[^']*'\|\"[^\"]*\(_api\|\.json\|parametro\)[^\"]*\"" lc.js | sort -u | head -20
+          curl -sS -L -m 60 -A "$UA" "https://loterias.caixa.gov.br/Style%20Library/json/params.txt" -o params.txt -w "http=%{http_code}\n"
+          echo "==== params.txt"; cat params.txt
+          API=$(python3 -c "import json;print(json.load(open('params.txt'))['urlapiloterias'])" 2>/dev/null || true)
+          echo; echo "API=$API"
+          [ -z "$API" ] && exit 0
+          for p in "/api/resultados/download?modalidade=Super%20Sete" "/api/resultados/download?modalidade=Super%207" "/api/supersete" "/api/supersete/1"; do
+            echo "== $API$p"
+            curl -sS -L -m 120 -A "$UA" -o x.bin -D h.txt -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$API$p" || echo falhou
+            grep -i 'content-disposition' h.txt || true
+            head -c 300 x.bin | strings | head -3
+          done
