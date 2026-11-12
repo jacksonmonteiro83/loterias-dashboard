@@ -6,25 +6,18 @@ jobs:
   testar:
     runs-on: ubuntu-latest
     steps:
-      - name: Procurar o botao de download na pagina
+      - name: Ler o JS do botao de download
         run: |
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
-          curl -sS -L -m 60 -A "$UA" "https://loterias.caixa.gov.br/Paginas/Super-sete.aspx" -o pagina.html
-          echo "== linhas com download/xlsx/crescente"
-          grep -in 'download\|xlsx\|crescente\|baixar' pagina.html | cut -c1-300 | head -40
-          echo "== scripts da pagina"
-          grep -io 'src="[^"]*\.js[^"]*"' pagina.html | head -30
-      - name: Testar enderecos candidatos
-        run: |
-          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
+          B="https://loterias.caixa.gov.br"
+          curl -sS -L -m 60 -A "$UA" "$B/style%20library/js/webparts/download-resultados.js" -o dl.js -w "http=%{http_code} bytes=%{size_download}\n"
+          echo "==== download-resultados.js"; head -c 6000 dl.js
+          echo; echo "==== candidatos"
           for u in \
-            "https://loterias.caixa.gov.br/Paginas/Download-Resultados.aspx?modalidade=Super-Sete" \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados?modalidade=Super+Sete" \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Super+Sete&ordem=crescente" \
-            "https://servicebus3.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Super+Sete" \
-            "https://loterias.caixa.gov.br/Documents/Recursos/Download/Super_Sete.xlsx" \
-            "https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete/1" ; do
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/supersete/download-resultados" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/download-resultados?modalidade=supersete" \
+            "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download-resultados?modalidade=supersete" ; do
             echo "== $u"
-            curl -sS -L -m 60 -A "$UA" -o /tmp/x.bin -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$u" || echo falhou
-            head -c 200 /tmp/x.bin | strings | head -2
+            curl -sS -L -m 90 -A "$UA" -o x.bin -w "http=%{http_code} tipo=%{content_type} bytes=%{size_download}\n" "$u" || echo falhou
+            head -c 300 x.bin | strings | head -3
           done
