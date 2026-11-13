@@ -1,18 +1,18 @@
 {
   "loteria": "lotomania",
   "nome": "Lotomania",
-  "atualizado_em": "2026-11-12T11:01:14-03:00",
-  "data_corrente": "2026-11-12",
+  "atualizado_em": "2026-11-13T07:45:46-03:00",
+  "data_corrente": "2026-11-13",
   "concursos": 2998,
   "ultimo_concurso": 2998,
   "data_ultimo_concurso": "2026-11-11",
-  "selic_ate": "2026-11-11",
+  "selic_ate": "2026-11-12",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
     "bruto_nominal": 5290029624.77,
-    "bruto_corrigido": 28652090548.26,
+    "bruto_corrigido": 28666642372.01,
     "ir_nominal": 1152177921.95,
-    "ir_corrigido": 7406512291.34
+    "ir_corrigido": 7410273910.8
   }
 }

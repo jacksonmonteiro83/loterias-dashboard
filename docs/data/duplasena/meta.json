@@ -1,18 +1,18 @@
 {
   "loteria": "duplasena",
   "nome": "Dupla Sena",
-  "atualizado_em": "2026-11-12T11:01:14-03:00",
-  "data_corrente": "2026-11-12",
+  "atualizado_em": "2026-11-13T07:45:46-03:00",
+  "data_corrente": "2026-11-13",
   "concursos": 3031,
   "ultimo_concurso": 3031,
   "data_ultimo_concurso": "2026-11-11",
-  "selic_ate": "2026-11-11",
+  "selic_ate": "2026-11-12",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
     "bruto_nominal": 2663091237.95,
-    "bruto_corrigido": 9042983598.56,
+    "bruto_corrigido": 9047576349.07,
     "ir_nominal": 521343949.02,
-    "ir_corrigido": 2029807070.66
+    "ir_corrigido": 2030837969.07
   }
 }

@@ -1,18 +1,18 @@
 {
   "loteria": "timemania",
   "nome": "Timemania",
-  "atualizado_em": "2026-11-12T11:01:14-03:00",
-  "data_corrente": "2026-11-12",
-  "concursos": 2466,
-  "ultimo_concurso": 2466,
-  "data_ultimo_concurso": "2026-11-10",
-  "selic_ate": "2026-11-11",
+  "atualizado_em": "2026-11-13T07:45:46-03:00",
+  "data_corrente": "2026-11-13",
+  "concursos": 2467,
+  "ultimo_concurso": 2467,
+  "data_ultimo_concurso": "2026-11-12",
+  "selic_ate": "2026-11-12",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
-    "bruto_nominal": 2065766486.39,
-    "bruto_corrigido": 4895711180.27,
-    "ir_nominal": 355826362.68,
-    "ir_corrigido": 846940002.83
+    "bruto_nominal": 2066509729.79,
+    "bruto_corrigido": 4898940857.47,
+    "ir_nominal": 355886421.43,
+    "ir_corrigido": 847430205.47
   }
 }
