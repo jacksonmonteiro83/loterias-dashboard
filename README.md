@@ -3,7 +3,7 @@
 Dashboard estático (GitHub Pages) com, para cada loteria da Caixa, os prêmios brutos pagos por faixa,
 corrigidos pela Selic até hoje, o IR arrecadado e os totais por mês e por ano.
 Loterias: Mega-Sena, Lotofácil, Quina, Lotomania, Dupla Sena, Timemania, Dia de Sorte, Super Sete e +Milionária.
-Atualiza sozinho todo dia à meia-noite (Brasília).
+Atualiza sozinho uma vez por mês, no dia 1 à meia-noite (Brasília); dá para rodar na hora em Actions → Run workflow.
 
 ## Como funciona
 
