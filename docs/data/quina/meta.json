@@ -1,12 +1,12 @@
 {
   "loteria": "quina",
   "nome": "Quina",
-  "atualizado_em": "2026-11-13T07:45:46-03:00",
-  "data_corrente": "2026-11-13",
-  "concursos": 7166,
-  "ultimo_concurso": 7166,
-  "data_ultimo_concurso": "2026-11-12",
-  "selic_ate": "2026-11-12",
+  "atualizado_em": "2026-11-14T07:04:50-03:00",
+  "data_corrente": "2026-11-14",
+  "concursos": 7167,
+  "ultimo_concurso": 7167,
+  "data_ultimo_concurso": "2026-11-13",
+  "selic_ate": "2026-11-13",
   "regras_ir_conferidas": false,
   "regras_ir_pendentes": [
     {
@@ -15,9 +15,9 @@
     }
   ],
   "totais": {
-    "bruto_nominal": 17421647026.89,
-    "bruto_corrigido": 82816444014.64,
-    "ir_nominal": 3429052394.68,
-    "ir_corrigido": 20397100220.26
+    "bruto_nominal": 17423086200.11,
+    "bruto_corrigido": 82859944003.44,
+    "ir_nominal": 3429161718.43,
+    "ir_corrigido": 20407568823.28
   }
 }
