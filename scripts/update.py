@@ -60,7 +60,10 @@ def base_api(slug):
 
 
 SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados"
-HEADERS = {"User-Agent": "Mozilla/5.0 (historico-loterias)", "Accept": "application/json"}
+# A Caixa devolve HTTP 403 a clientes que nao parecem um navegador (visto em 14/11/2026 em 4 das 9 tarefas
+# paralelas); por isso o User-Agent e o Referer imitam o proprio site.
+HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+           "Accept": "application/json, text/plain, */*", "Referer": "https://loterias.caixa.gov.br/"}
 REBAIXAR_ULTIMOS = 3   # rebaixa os ultimos N concursos a cada rodada (pega correcoes)
 BLOCO = 200            # grava o progresso a cada BLOCO concursos baixados
 

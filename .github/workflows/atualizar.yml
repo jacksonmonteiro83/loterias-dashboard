@@ -46,7 +46,15 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Baixar concursos novos de ${{ matrix.slug }}
-        run: python scripts/update.py coletar ${{ matrix.slug }}
+        # Até 3 tentativas: a Caixa às vezes bloqueia (HTTP 403) o IP de um runner por um tempo.
+        # A coleta é incremental e grava o progresso, então repetir é seguro.
+        run: |
+          for i in 1 2 3; do
+            python scripts/update.py coletar ${{ matrix.slug }} && exit 0
+            echo "Tentativa $i falhou; aguardando antes de repetir."
+            sleep $((i * 120))
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         if: always()   # guarda o progresso mesmo se a coleta falhar no meio
         with:
