@@ -3,6 +3,7 @@ name: Atualizar loterias
 on:
   schedule:
     - cron: "0 3 * * *"   # 03:00 UTC = 00:00 em Brasília (o GitHub pode atrasar alguns minutos)
+    - cron: "0 15 * * *"  # 12:00 em Brasília: segunda chance caso a Caixa tenha bloqueado (HTTP 403) a rodada da madrugada
   workflow_dispatch:       # botão "Run workflow" para rodar na hora
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
     timeout-minutes: 170
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 3
       matrix:
         slug: ${{ fromJSON(needs.listar.outputs.slugs) }}
     steps:
