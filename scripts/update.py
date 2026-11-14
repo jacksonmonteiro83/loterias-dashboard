@@ -73,6 +73,15 @@ def ativas():
 
 
 # ------------------------------------------------------------------ rede
+def _outro_host(url):
+    """servicebus2 <-> servicebus3: a Caixa as vezes bloqueia (HTTP 403) um IP em um deles e nao no outro."""
+    if "servicebus2." in url:
+        return url.replace("servicebus2.", "servicebus3.", 1)
+    if "servicebus3." in url:
+        return url.replace("servicebus3.", "servicebus2.", 1)
+    return url
+
+
 def _get_json(url, tentativas=8):
     ultimo_erro = None
     for i in range(tentativas):
@@ -83,12 +92,13 @@ def _get_json(url, tentativas=8):
             if r.status_code == 404:
                 return None
             ultimo_erro = f"HTTP {r.status_code}"
-            if r.status_code in (403, 429):      # limite de requisicoes: espera mais (respeita Retry-After)
+            if r.status_code in (403, 429):      # bloqueio/limite: espera (respeita Retry-After) e troca de servidor
                 try:
                     espera = float(r.headers.get("Retry-After", ""))
                 except ValueError:
-                    espera = min(60, 5 * 2 ** i)
-                time.sleep(min(90, max(espera, 5)))
+                    espera = min(30, 5 * 2 ** i)
+                time.sleep(min(60, max(espera, 5)))
+                url = _outro_host(url)
                 continue
         except (requests.RequestException, ValueError) as e:
             ultimo_erro = str(e)
