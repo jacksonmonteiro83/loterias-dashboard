@@ -1,18 +1,18 @@
 {
   "loteria": "lotofacil",
   "nome": "Lotofácil",
-  "atualizado_em": "2026-11-14T07:04:50-03:00",
+  "atualizado_em": "2026-11-14T07:37:55-03:00",
   "data_corrente": "2026-11-14",
-  "concursos": 3828,
-  "ultimo_concurso": 3828,
-  "data_ultimo_concurso": "2026-11-12",
+  "concursos": 3829,
+  "ultimo_concurso": 3829,
+  "data_ultimo_concurso": "2026-11-13",
   "selic_ate": "2026-11-13",
   "regras_ir_conferidas": true,
   "regras_ir_pendentes": [],
   "totais": {
-    "bruto_nominal": 34103168525.0,
-    "bruto_corrigido": 83678544538.75,
-    "ir_nominal": 2791585963.12,
-    "ir_corrigido": 6823569732.45
+    "bruto_nominal": 34110632556.96,
+    "bruto_corrigido": 83686008570.71,
+    "ir_nominal": 2792077863.15,
+    "ir_corrigido": 6824061632.48
   }
 }
