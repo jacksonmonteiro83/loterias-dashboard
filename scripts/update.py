@@ -13,6 +13,10 @@ codigo de saida 1 no final, listando quais falharam.
 """
 import argparse
 import json
+import os
+import shutil
+import subprocess
+import tempfile
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -73,6 +77,9 @@ def ativas():
 
 
 # ------------------------------------------------------------------ rede
+_COOKIES = os.path.join(tempfile.gettempdir(), "loterias_cookies.txt")
+
+
 def _outro_host(url):
     """servicebus2 <-> servicebus3: a Caixa as vezes bloqueia (HTTP 403) um IP em um deles e nao no outro."""
     if "servicebus2." in url:
@@ -82,22 +89,37 @@ def _outro_host(url):
     return url
 
 
+def _baixar(url):
+    """Devolve (status_http, corpo). Usa o curl quando existe: a Caixa tem um anti-bot (Radware) que devolveu
+    HTTP 403 ao 'requests' (impressao digital TLS) mas deixou o curl passar, no mesmo servidor do GitHub Actions."""
+    if shutil.which("curl"):
+        try:
+            p = subprocess.run(
+                ["curl", "-sS", "-L", "-m", "40", "--compressed", "-A", HEADERS["User-Agent"],
+                 "-H", "Accept: " + HEADERS["Accept"], "-H", "Referer: " + HEADERS["Referer"],
+                 "-b", _COOKIES, "-c", _COOKIES, "-w", "\n%{http_code}", url],
+                capture_output=True, text=True, timeout=60)
+            if p.returncode == 0 and "\n" in p.stdout:
+                corpo, _, codigo = p.stdout.rpartition("\n")
+                return int(codigo), corpo
+        except (subprocess.SubprocessError, ValueError):
+            pass
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    return r.status_code, r.text
+
+
 def _get_json(url, tentativas=8):
     ultimo_erro = None
     for i in range(tentativas):
         try:
-            r = requests.get(url, headers=HEADERS, timeout=30)
-            if r.status_code == 200:
-                return r.json()
-            if r.status_code == 404:
+            status, corpo = _baixar(url)
+            if status == 200:
+                return json.loads(corpo)
+            if status == 404:
                 return None
-            ultimo_erro = f"HTTP {r.status_code}"
-            if r.status_code in (403, 429):      # bloqueio/limite: espera (respeita Retry-After) e troca de servidor
-                try:
-                    espera = float(r.headers.get("Retry-After", ""))
-                except ValueError:
-                    espera = min(30, 5 * 2 ** i)
-                time.sleep(min(60, max(espera, 5)))
+            ultimo_erro = f"HTTP {status}"
+            if status in (403, 429):             # bloqueio/limite: espera e troca de servidor
+                time.sleep(min(30, 5 * 2 ** i))
                 url = _outro_host(url)
                 continue
         except (requests.RequestException, ValueError) as e:
