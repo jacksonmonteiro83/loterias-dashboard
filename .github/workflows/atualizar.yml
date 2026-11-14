@@ -5,9 +5,14 @@ on:
     - cron: "0 3 * * *"   # 03:00 UTC = 00:00 em Brasília (o GitHub pode atrasar alguns minutos)
     - cron: "0 15 * * *"  # 12:00 em Brasília: segunda chance caso a Caixa tenha bloqueado (HTTP 403) a rodada da madrugada
   workflow_dispatch:       # botão "Run workflow" para rodar na hora
+    inputs:
+      tentativa:
+        description: "Número da tentativa (uso interno, para repetir coletas bloqueadas)"
+        default: "1"
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: atualizar
@@ -103,3 +108,19 @@ jobs:
         run: |
           echo "O cálculo falhou para alguma loteria; veja os logs do passo anterior."
           exit 1
+
+  # A Caixa bloqueia (HTTP 403) o IP de alguns runners por um tempo; repetir no mesmo runner não adianta.
+  # Se alguma coleta falhou, dispara uma nova rodada (outros runners). Para depois de 4 tentativas.
+  reexecutar:
+    needs: [coletar, publicar]
+    if: ${{ always() && needs.coletar.result == 'failure' && fromJSON(github.event.inputs.tentativa || '1') < 4 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prox=$(( ${{ github.event.inputs.tentativa || 1 }} + 1 ))
+          echo "Coleta bloqueada; disparando a tentativa $prox."
+          sleep 300
+          gh workflow run atualizar.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f tentativa=$prox
