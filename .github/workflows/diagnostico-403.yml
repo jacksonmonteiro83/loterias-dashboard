@@ -1,0 +1,17 @@
+name: Diagnostico 403 (temporario)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "IP de saida: $(curl -s -m 20 https://api.ipify.org)"
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          for u in servicebus2 servicebus3; do
+            echo "=== $u megasena"
+            curl -sS -m 40 -i -A "$UA" -H "Accept: application/json" -H "Referer: https://loterias.caixa.gov.br/" "https://$u.caixa.gov.br/portaldeloterias/api/megasena" | head -c 1500
+            echo
+          done
+          echo "=== pagina publica"; curl -sS -m 40 -o /dev/null -w "http=%{http_code}\n" -A "$UA" https://loterias.caixa.gov.br/Paginas/Mega-Sena.aspx
