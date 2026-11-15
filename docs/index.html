@@ -92,6 +92,7 @@ a{color:var(--accent)}
 .sobre{margin-bottom:16px;border-left:4px solid var(--accent)}
 .sobre h2{font-size:17px}
 .sobre p{margin:0 0 10px}
+.sobre ul:not(.techs){margin:0 0 10px;padding-left:22px}
 .sobre ol{margin:0 0 12px;padding-left:22px}
 .sobre li{margin-bottom:4px}
 .techs{display:flex;flex-wrap:wrap;gap:6px 8px;margin:6px 0 0;padding:0;list-style:none}
@@ -126,7 +127,15 @@ a{color:var(--accent)}
       <li>Qual foi a arrecadação total, corrigida pela Selic até hoje?</li>
       <li>Quanto desse total ficou com o governo, entre impostos (IR retido na fonte) e repasses sociais, e quanto foi para os custos da operação?</li>
     </ol>
-    <p>Para isso, o painel reúne todos os concursos de cada loteria, corrige os valores de cada data pela taxa Selic acumulada até hoje e divide a arrecadação entre apostadores, governo e operação. Parte dos números é estimada (por exemplo, a arrecadação em concursos antigos e a divisão legal fora do período mais recente); as notas ao lado de cada gráfico dizem o que é dado da Caixa e o que é estimativa.</p>
+    <p>Para isso, o painel reúne todos os concursos de cada loteria, corrige os valores de cada data pela Selic acumulada até hoje e divide a arrecadação entre apostadores, governo e operação.</p>
+    <p><b>O que é dado real:</b> os concursos, os ganhadores e o prêmio de cada faixa informados pela Caixa, a Selic diária do Banco Central e o IR por ganhador, calculado pelas regras da lei.</p>
+    <p><b>O que é estimativa:</b></p>
+    <ul>
+      <li><b>Arrecadação:</b> a Caixa só informa a arrecadação de cada concurso em geral a partir de 2010 (cerca de 55% do total); nos demais, ela é estimada pela relação prêmio/arrecadação da própria loteria.</li>
+      <li><b>Repasses sociais e custeio da Caixa:</b> são percentuais fixos da tabela atual da Caixa (37,49% e 19,13%), aplicados a todo o histórico; antes de 2019 a divisão legal era outra e não foi verificada.</li>
+      <li><b>IR:</b> inclui uma diferença de cerca de 9% da arrecadação, tratada como imposto retido na fonte por hipótese, porque os prêmios informados parecem já vir líquidos de IR; isso não está confirmado e afeta também a fatia dos apostadores.</li>
+    </ul>
+    <p>As notas junto de cada gráfico detalham cada item.</p>
     <h3>Tecnologias utilizadas</h3>
     <ul class="techs">
       <li>HTML, CSS e JavaScript puro</li>
