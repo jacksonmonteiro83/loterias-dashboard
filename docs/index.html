@@ -89,6 +89,16 @@ a{color:var(--accent)}
 .mk{cursor:help}
 .badge{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;
   color:var(--lc);background:color-mix(in srgb,var(--lc) 16%,transparent);border:1px solid color-mix(in srgb,var(--lc) 40%,transparent)}
+.sobre{margin-bottom:16px;border-left:4px solid var(--accent)}
+.sobre h2{font-size:17px}
+.sobre p{margin:0 0 10px}
+.sobre ol{margin:0 0 12px;padding-left:22px}
+.sobre li{margin-bottom:4px}
+.techs{display:flex;flex-wrap:wrap;gap:6px 8px;margin:6px 0 0;padding:0;list-style:none}
+.techs li{margin:0;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+.sobre h3{font-size:13px;margin:14px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.rodape{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:13px}
+.rodape b{color:var(--ink)}
 .r100{display:flex;height:34px;border-radius:8px;overflow:hidden;margin-top:12px;gap:2px}
 .r100 div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;min-width:2px;cursor:help;text-shadow:0 0 3px rgba(0,0,0,.55)}
 .sim-in{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:14px}
@@ -107,6 +117,28 @@ a{color:var(--accent)}
     <h1>Histórico das Loterias CAIXA</h1>
     <div class="sub" id="atualizado"></div>
   </header>
+
+  <section class="card sobre" aria-labelledby="sobre-t">
+    <h2 id="sobre-t">Por que este dashboard existe</h2>
+    <p>Fiz este dashboard para responder, com dados públicos, algumas perguntas simples sobre as loterias da CAIXA:</p>
+    <ol>
+      <li>Quanto cada loteria já pagou em prêmios ao longo de toda a sua história?</li>
+      <li>Qual foi a arrecadação total, corrigida pela Selic até hoje?</li>
+      <li>Quanto desse total ficou com o governo, entre impostos (IR retido na fonte) e repasses sociais, e quanto foi para os custos da operação?</li>
+    </ol>
+    <p>Para isso, o painel reúne todos os concursos de cada loteria, corrige os valores de cada data pela taxa Selic acumulada até hoje e divide a arrecadação entre apostadores, governo e operação. Parte dos números é estimada (por exemplo, a arrecadação em concursos antigos e a divisão legal fora do período mais recente); as notas ao lado de cada gráfico dizem o que é dado da Caixa e o que é estimativa.</p>
+    <h3>Tecnologias utilizadas</h3>
+    <ul class="techs">
+      <li>HTML, CSS e JavaScript puro</li>
+      <li>Gráficos em SVG feitos à mão</li>
+      <li>Python e pandas (cálculos)</li>
+      <li>GitHub Actions (atualização automática)</li>
+      <li>GitHub Pages (hospedagem)</li>
+      <li>API pública de resultados da CAIXA</li>
+      <li>Selic: Banco Central (SGS 11)</li>
+      <li>Construído com apoio do Claude (Anthropic)</li>
+    </ul>
+  </section>
 
   <div class="filter-panel">
     <div class="filter-title">Selecione as Loterias para Analisar:</div>
@@ -133,6 +165,9 @@ a{color:var(--accent)}
   <div class="card empty" id="vazio" hidden>Nenhuma loteria selecionada. Marque ao menos uma acima, ou use “Apenas Principais” / “TODAS AS LOTERIAS”.</div>
   <div id="app"></div>
   <div class="note" id="notas"></div>
+  <footer class="rodape">
+    DESENVOLVIDO POR <b>Jackson Monteiro</b> · <a href="https://www.linkedin.com/in/jackson-monteiro1983/" target="_blank" rel="noopener">LinkedIn</a>
+  </footer>
 </div>
 <div class="tip" id="tip"></div>
 
