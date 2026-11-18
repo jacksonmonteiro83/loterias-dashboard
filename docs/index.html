@@ -91,6 +91,14 @@ a{color:var(--accent)}
   color:var(--lc);background:color-mix(in srgb,var(--lc) 16%,transparent);border:1px solid color-mix(in srgb,var(--lc) 40%,transparent)}
 .sobre{margin-bottom:16px;border-left:4px solid var(--accent)}
 .sobre h2{font-size:17px}
+.sobre summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;border-radius:6px}
+.sobre summary::-webkit-details-marker{display:none}
+.sobre summary h2{margin:0}
+.sobre summary:hover h2{color:var(--accent)}
+.sobre summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.sobre .chev{flex:0 0 auto;width:9px;height:9px;margin:0 4px 4px 0;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .18s ease, margin .18s ease}
+.sobre details[open] .chev{transform:rotate(-135deg);margin-bottom:0;margin-top:4px}
+.sobre details[open] summary{margin-bottom:14px}
 .sobre p{margin:0 0 10px}
 .sobre ul:not(.techs){margin:0 0 10px;padding-left:22px}
 .sobre ol{margin:0 0 12px;padding-left:22px}
@@ -120,7 +128,8 @@ a{color:var(--accent)}
   </header>
 
   <section class="card sobre" aria-labelledby="sobre-t">
-    <h2 id="sobre-t">Por que este dashboard existe</h2>
+    <details>
+    <summary><h2 id="sobre-t">Por que este dashboard existe</h2><span class="chev" aria-hidden="true"></span></summary>
     <p>Fiz este dashboard para responder, com dados públicos, algumas perguntas simples sobre as loterias da CAIXA:</p>
     <ol>
       <li>Quanto cada loteria já pagou em prêmios ao longo de toda a sua história?</li>
@@ -147,6 +156,7 @@ a{color:var(--accent)}
       <li>Selic: Banco Central (SGS 11)</li>
       <li>Construído com apoio do Claude (Anthropic)</li>
     </ul>
+    </details>
   </section>
 
   <div class="filter-panel">
